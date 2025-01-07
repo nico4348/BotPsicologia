@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+//Creacion usuario:-----------------------------------------------------------------------------------------------------------------------------------------------------
+model informacionUsuario {
+  idUsuario        String  @id @unique @default(uuid())
+  nombre           String?
+  apellido         String?
+  correo           String? @unique
+  telefonoPersonal String  @unique
+  telefonoFamiliar String? @unique
+  documento        String? @unique
+  tipoDocumento    String? @default("CC")
+  testActual       String? @default("ghq12") // Tests
+  historial        Json?
+
+  // Relación con ghq12
+  ghq12 ghq12?
+  tests tests?
+
+  // Agendamiento
+  disponibilidad        String                  @default("")
+  citas                 cita[]
+  historialAgendamiento historialAgendamiento[]
+
+  // Relaciones
+  chats        chats[]      @relation("conexionChats")
+  credenciales credencial[] @relation("conexionCredencial")
+
+  // Sociodemográfico
+  informacionPersonal informacionPersonal[] @relation("conexionInformacionPersonal")
+  condicionesVivienda condicionesvivienda[] @relation("conexionCondicionesVivienda")
+  educacion           educacion[]           @relation("conexionEducacion")
+  situacionlaboral    situacionlaboral[]    @relation("conexionSituacionLaboral")
+  salud               salud[]               @relation("conexionSalud")
+
+  @@map("informacion_usuario")
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//Asistente Psicologico:------------------------------------------------------------------------------------------------------------------------------------------------
+model chats {
+  idchat       String   @id @unique @default(uuid())
+  idUsuario    String
+  fechaHora    DateTime @default(now())
+  conversacion Json
+
+  usuarioChats informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionChats")
+
+  @@map("chats")
+}
+
+model credencial {
+  idCredencial String @id @unique @default(uuid())
+  idUsuario    String
+  usuario      String
+  contrasena   String
+  rol          String @default("user")
+
+  usuarioCredencial informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionCredencial")
+
+  @@map("credencial")
+}
+
+//Sociodemografico:
+model informacionPersonal {
+  idinformacionPersonal String @id @unique @default(uuid())
+  idUsuario             String
+
+  edad          Int
+  sexo          String
+  genero        String
+  estadocivil   String
+  hijosnum      Int
+  personascargo Int
+  vivienda      String
+  localidad     String
+  tipovivienda  String
+  familiaresnum Int
+  estrato       Int
+  etnico        String
+
+  usuarioInformacionPersonal informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionInformacionPersonal")
+
+  @@map("informacionPersonal")
+}
+
+model condicionesvivienda {
+  idcondicionesvivienda String @id @unique @default(uuid())
+  idUsuario             String
+  hacinamiento          String
+  violencia             String
+  servicios             Json
+  problemas             Json
+  tipozona              String
+
+  usuarioCondicionesVivienda informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionCondicionesVivienda")
+
+  @@map("condicionesvivienda")
+}
+
+model educacion {
+  ideducacion      String @id @unique @default(uuid())
+  idUsuario        String
+  tipocolegio      String
+  nivelescolaridad String
+  carrera          String
+  periodo          String
+  motivo           String
+  matedificulta    Json
+  nivelingles      String
+
+  usuarioeducacion informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionEducacion")
+
+  @@map("educacion")
+}
+
+model situacionlaboral {
+  idsituacionlaboral String @id @unique @default(uuid())
+  idUsuario          String
+  situacion          String
+  ingresos           String
+  sector             String
+  jornada            String
+  ascenso            String
+
+  usuariosituacionlaboral informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionSituacionLaboral")
+
+  @@map("situacionlaboral")
+}
+
+model salud {
+  idsalud         String @id @unique @default(uuid())
+  idUsuario       String
+  enfermecronica  String
+  discapacidad    String
+  suspsicoactivas String
+  alcohol         String
+  Internet        String
+  nicotina        String
+  eps             String
+  asispsicologo   String
+
+  usuariosalud informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionSalud")
+
+  @@map("salud")
+}
+
+//GHQ12 + Tests:
+model ghq12 {
+  idGhq12        String @id @unique @default(uuid())
+  telefono       String @unique
+  tratDatos      String @default("")
+  historial      Json?
+  Puntaje        Int    @default(0)
+  preguntaActual Int    @default(0)
+  resPreg        Json?
+
+  usuario informacionUsuario @relation(fields: [telefono], references: [telefonoPersonal]) // Relación con informacionUsuario
+}
+
+model tests {
+  idTests        String @id @unique @default(uuid())
+  telefono       String @unique
+  tratDatos      String @default("")
+  historial      Json?
+  Puntaje        Int    @default(0)
+  preguntaActual Int    @default(0)
+  resPreg        Json?
+
+  usuario informacionUsuario @relation(fields: [telefono], references: [telefonoPersonal]) // Relación con informacionUsuario
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//Agendamientos:------------------------------------------------------------------------------------------------------------------------------------------------
+
+model consultorio {
+  idConsultorio String  @id @unique @default(uuid())
+  nombre        String
+  activo        Boolean @default(true)
+
+  citas cita[] // Relación con cita
+}
+
+model historialAgendamiento {
+  idHistAgendamiento String  @id @unique @default(uuid())
+  numeroUsuario      String  @unique
+  citaAgendada       Boolean @default(false)
+  tratDatos          String  @default("")
+  agendamiento       Boolean @default(false)
+  historial          Json?
+
+  usuario informacionUsuario @relation(fields: [numeroUsuario], references: [telefonoPersonal]) // Relación con informacionUsuario
+}
+
+model practicante {
+  idPracticante    String @id @unique @default(uuid())
+  numero_documento String @unique
+  tipo_documento   String @default("CC")
+  nombre           String
+  genero           String
+  estrato          String
+  barrio           String
+  localidad        String
+  horario          String
+
+  citas cita[] // Relación con cita
+}
+
+model cita {
+  idCita        String @id @unique @default(uuid())
+  idConsultorio String
+  idUsuario     String
+  idPracticante String
+  fechaHora     String
+
+  consultorio consultorio        @relation(fields: [idConsultorio], references: [idConsultorio]) // Relación con consultorio
+  usuario     informacionUsuario @relation(fields: [idUsuario], references: [idUsuario]) // Relación con informacionUsuario
+  practicante practicante        @relation(fields: [idPracticante], references: [idPracticante]) // Relación con practicante
+}
+
+// Inserte historial clinico
+
+// model HistorialClinico {
+//   id              Int      @id @default(autoincrement())
+//   motivo_consulta String   @db.VarChar(100)
+//   remitido        String   @db.VarChar(100)
+//   diagnostico     String   @db.VarChar(200)
+//   tratamiento     String   @db.VarChar(200)
+//   estado_proceso  String   @db.VarChar(50)
+//   pacienteId      BigInt
+//   citaId          Int
+//   Cita            Cita     @relation(fields: [citaId], references: [id_cita])
+//   Paciente        Paciente @relation(fields: [pacienteId], references: [numero_documento])
+// }
