@@ -18,6 +18,8 @@ model informacionUsuario {
   documento        String? @unique
   tipoDocumento    String? @default("CC")
   testActual       String? @default("ghq12") // Tests
+  motivo           String?
+  ayudaPsicologica Int     @default(1)
   historial        Json?
 
   // Relación con ghq12

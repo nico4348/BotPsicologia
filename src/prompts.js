@@ -1,4 +1,4 @@
-export const register = `
+export const registerPrompt = `
 	Instrucciones para Registro de Usuario:
 
 	Perfil Core:
@@ -18,7 +18,7 @@ export const register = `
     
 `
 
-export const assistant = `
+export const assistantPrompt = `
     Instrucciones para Acompañante Virtual Empático:
   
     Perfil Core:

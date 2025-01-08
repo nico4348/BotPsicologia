@@ -8,13 +8,15 @@
 
 import OpenAI from 'openai'
 import { obtenerHist, saveHist, registrarUsuario } from '../queries/queries.js'
+import { registerPrompt } from '../prompts.js'
 
 const aiRegister = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 })
 
 async function register(conversationHistory, number) {
-	const hist = conversationHistory.slice(-4)
+	const hist = [...conversationHistory]
+	hist.shift()
 	hist.push({
 		role: 'system',
 		content: `Extrae en formato json la informacion del usuario con este formato:
@@ -69,6 +71,7 @@ const tools = [
 
 export async function apiRegister(numero, msg) {
 	const conversationHistory = await obtenerHist(numero)
+	conversationHistory.unshift({ role: 'system', content: registerPrompt })
 	conversationHistory.push({ role: 'user', content: msg })
 	try {
 		const response = await aiRegister.chat.completions.create({
@@ -80,23 +83,22 @@ export async function apiRegister(numero, msg) {
 		const assistantMessage = response.choices[0].message.content
 		const toolCalls = response.choices[0].message.tool_calls
 
-		console.log('Respuesta de OpenAI:', toolCalls)
-
 		if (toolCalls && toolCalls.length > 0) {
 			for (const call of toolCalls) {
 				if (call.type === 'function' && call.function.name === 'register') {
-					const result = await register(conversationHistory, numero)
-					console.log('Resultado:', result)
+					await register(conversationHistory, numero)
 
 					const answ =
 						'Perfecto, acaba de completar su registro, ahora le responderá nuestra Asistente Psicologica'
 					conversationHistory.push({ role: 'assistant', content: answ })
+					conversationHistory.shift()
 					await saveHist(numero, conversationHistory)
 					return answ
 				}
 			}
 		} else {
 			conversationHistory.push({ role: 'assistant', content: assistantMessage })
+			conversationHistory.shift()
 			await saveHist(numero, conversationHistory)
 			return assistantMessage
 		}

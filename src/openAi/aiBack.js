@@ -14,12 +14,13 @@ const aiBack = new OpenAI({
 
 export async function apiBack(conversationHistory, action) {
 	try {
-		const hist = [...conversationHistory] // Clonación del historial
+		const hist = conversationHistory.slice(-6)
 		hist.push({ role: 'system', content: action }) // Agregar acción al final
 
 		const completion = await aiBack.chat.completions.create({
 			model: 'gpt-4o-mini',
 			messages: hist,
+			temperature: 0,
 		})
 
 		let responseBack = completion.choices[0].message.content

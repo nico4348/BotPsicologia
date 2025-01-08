@@ -1,16 +1,22 @@
 import { addKeyword, utils, EVENTS } from '@builderbot/bot'
 import { obtenerUsuario } from './queries/queries'
 import { apiRegister } from './openAi/aiRegister'
+import { apiAssistant1, apiAssistant2 } from './openAi/aiAssistant'
 
-export const welcomeFlow = addKeyword(EVENTS.WELCOME).addAction(async (ctx, { gotoFlow }) => {
-	if (await obtenerUsuario(ctx.from)) {
-		console.log('Usuario ya registrado')
-		return gotoFlow(assistantFlow)
-	} else {
-		console.log('Usuario no registrado')
-		return gotoFlow(registerFlow)
+export const welcomeFlow = addKeyword(EVENTS.WELCOME).addAction(
+	async (ctx, { gotoFlow, state }) => {
+		const user = await obtenerUsuario(ctx.from)
+
+		if (user.apellido) {
+			await state.update({ user: user })
+			console.log('Usuario ya registrado')
+			return gotoFlow(assistantFlow)
+		} else {
+			console.log('Usuario no registrado')
+			return gotoFlow(registerFlow)
+		}
 	}
-})
+)
 
 export const registerFlow = addKeyword(utils.setEvent('REGISTER_FLOW')).addAction(
 	async (ctx, { flowDynamic }) => {
@@ -19,14 +25,26 @@ export const registerFlow = addKeyword(utils.setEvent('REGISTER_FLOW')).addActio
 )
 
 export const assistantFlow = addKeyword(utils.setEvent('ASSISTANT_FLOW')).addAction(
-	async (ctx, { flowDynamic }) => {
-		await flowDynamic('pasaste por assistantFlow')
+	async (ctx, { flowDynamic, gotoFlow, state }) => {
+		const user = state.get('user')
+		console.log(user.ayudaPsicologica)
+		if (!user.ayudaPsicologica) {
+			console.log('0')
+			await flowDynamic(await apiAssistant2(ctx.from, ctx.body))
+		} else {
+			if (user.ayudaPsicologica == 2) {
+				return gotoFlow(testFlow)
+			} else {
+				const assist = await apiAssistant1(ctx.from, ctx.body)
+				await flowDynamic(assist)
+			}
+		}
 	}
 )
 
 export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
-	async (ctx, { gotoFlow }) => {
-		return gotoFlow(registerFlow)
+	async (ctx, { flowDynamic }) => {
+		await flowDynamic('a')
 	}
 )
 
