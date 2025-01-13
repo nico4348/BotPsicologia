@@ -16,10 +16,11 @@ model informacionUsuario {
   telefonoPersonal String  @unique
   telefonoFamiliar String? @unique
   documento        String? @unique
-  tipoDocumento    String? @default("CC")
-  testActual       String? @default("ghq12") // Tests
+  tipoDocumento    String  @default("CC")
+  testActual       String  @default("ghq12")
   motivo           String?
   ayudaPsicologica Int     @default(1)
+  tratDatos        Boolean @default(false)
   historial        Json?
 
   // Relación con ghq12

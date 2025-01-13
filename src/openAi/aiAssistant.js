@@ -8,12 +8,16 @@
 
 import OpenAI from 'openai'
 import { obtenerHist, saveHist, switchAyudaPsicologica } from '../queries/queries.js'
-import { assistantPrompt } from '../prompts.js'
+import { assistantPrompt } from './prompts.js'
 import { apiBack } from './aiBack.js'
+
+//---------------------------------------------------------------------------------------------------------
 
 const aiRegister = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 })
+
+//---------------------------------------------------------------------------------------------------------
 
 async function cambiarEstado(num, hist) {
 	const opcion = parseInt(
@@ -30,6 +34,8 @@ async function cambiarEstado(num, hist) {
 		message: 'Estado del usuario cambiado',
 	}
 }
+
+//---------------------------------------------------------------------------------------------------------
 
 // Definición de herramientas
 const tools = [
@@ -49,13 +55,15 @@ const tools = [
 	},
 ]
 
+//---------------------------------------------------------------------------------------------------------
+
 export async function apiAssistant1(numero, msg) {
 	const conversationHistory = await obtenerHist(numero)
 	conversationHistory.unshift({
 		role: 'system',
 		content: assistantPrompt,
 	})
-	if (Math.floor(Math.random() * 10) <= 10) {
+	if (Math.floor(Math.random() * 10) <= 2) {
 		conversationHistory.push({
 			role: 'system',
 			content: `\nIMPORTANTE:\nDEBES preguntar al usuario si quiere recibir ayuda psicológica. 
@@ -103,6 +111,8 @@ export async function apiAssistant1(numero, msg) {
 	}
 }
 
+//---------------------------------------------------------------------------------------------------------
+
 export async function apiAssistant2(numero, msg) {
 	const conversationHistory = await obtenerHist(numero)
 	conversationHistory.unshift({ role: 'system', content: assistantPrompt })
@@ -124,3 +134,5 @@ export async function apiAssistant2(numero, msg) {
 		throw new Error('Hubo un error al procesar la solicitud.')
 	}
 }
+
+//---------------------------------------------------------------------------------------------------------

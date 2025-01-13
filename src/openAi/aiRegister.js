@@ -8,11 +8,15 @@
 
 import OpenAI from 'openai'
 import { obtenerHist, saveHist, registrarUsuario } from '../queries/queries.js'
-import { registerPrompt } from '../prompts.js'
+import { registerPrompt } from './prompts.js'
+
+//---------------------------------------------------------------------------------------------------------
 
 const aiRegister = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 })
+
+//---------------------------------------------------------------------------------------------------------
 
 async function register(conversationHistory, number) {
 	const hist = [...conversationHistory]
@@ -46,6 +50,8 @@ async function register(conversationHistory, number) {
 	}
 }
 
+//---------------------------------------------------------------------------------------------------------
+
 // Definición de herramientas
 const tools = [
 	{
@@ -68,6 +74,8 @@ const tools = [
 		},
 	},
 ]
+
+//---------------------------------------------------------------------------------------------------------
 
 export async function apiRegister(numero, msg) {
 	const conversationHistory = await obtenerHist(numero)
@@ -107,3 +115,5 @@ export async function apiRegister(numero, msg) {
 		throw new Error('Hubo un error al procesar la solicitud.')
 	}
 }
+
+//---------------------------------------------------------------------------------------------------------

@@ -5,6 +5,8 @@ import { welcomeFlow, registerFlow, assistantFlow, testFlow, agendFlow } from '.
 
 const PORT = process.env.PORT ?? 3008
 
+//---------------------------------------------------------------------------------------------------------
+
 const main = async () => {
 	const adapterFlow = createFlow([welcomeFlow, registerFlow, assistantFlow, testFlow, agendFlow])
 
@@ -21,6 +23,8 @@ const main = async () => {
 		provider: adapterProvider,
 		database: adapterDB,
 	})
+
+	//---------------------------------------------------------------------------------------------------------
 
 	adapterProvider.server.post(
 		'/v1/messages',

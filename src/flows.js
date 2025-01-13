@@ -1,7 +1,11 @@
+//---------------------------------------------------------------------------------------------------------
+
 import { addKeyword, utils, EVENTS } from '@builderbot/bot'
 import { obtenerUsuario } from './queries/queries'
 import { apiRegister } from './openAi/aiRegister'
 import { apiAssistant1, apiAssistant2 } from './openAi/aiAssistant'
+
+//---------------------------------------------------------------------------------------------------------
 
 export const welcomeFlow = addKeyword(EVENTS.WELCOME).addAction(
 	async (ctx, { gotoFlow, state }) => {
@@ -18,11 +22,15 @@ export const welcomeFlow = addKeyword(EVENTS.WELCOME).addAction(
 	}
 )
 
+//---------------------------------------------------------------------------------------------------------
+
 export const registerFlow = addKeyword(utils.setEvent('REGISTER_FLOW')).addAction(
 	async (ctx, { flowDynamic }) => {
 		await flowDynamic(await apiRegister(ctx.from, ctx.body))
 	}
 )
+
+//---------------------------------------------------------------------------------------------------------
 
 export const assistantFlow = addKeyword(utils.setEvent('ASSISTANT_FLOW')).addAction(
 	async (ctx, { flowDynamic, gotoFlow, state }) => {
@@ -42,17 +50,23 @@ export const assistantFlow = addKeyword(utils.setEvent('ASSISTANT_FLOW')).addAct
 	}
 )
 
+//---------------------------------------------------------------------------------------------------------
+
 export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 	async (ctx, { flowDynamic }) => {
 		await flowDynamic('a')
 	}
 )
 
+//---------------------------------------------------------------------------------------------------------
+
 export const agendFlow = addKeyword(utils.setEvent('AGEND_FLOW')).addAction(
 	async (ctx, { gotoFlow }) => {
 		return gotoFlow(registerFlow)
 	}
 )
+
+//---------------------------------------------------------------------------------------------------------
 
 // export const discordFlow = addKeyword('doc').addAnswer(
 // 	[
