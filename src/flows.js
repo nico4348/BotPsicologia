@@ -4,6 +4,7 @@ import { addKeyword, utils, EVENTS } from '@builderbot/bot'
 import { obtenerUsuario } from './queries/queries'
 import { apiRegister } from './openAi/aiRegister'
 import { apiAssistant1, apiAssistant2 } from './openAi/aiAssistant'
+import { procesarMensaje } from './proccesTest.js'
 
 //---------------------------------------------------------------------------------------------------------
 
@@ -53,8 +54,9 @@ export const assistantFlow = addKeyword(utils.setEvent('ASSISTANT_FLOW')).addAct
 //---------------------------------------------------------------------------------------------------------
 
 export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
-	async (ctx, { flowDynamic }) => {
-		await flowDynamic('a')
+	async (ctx, { flowDynamic, state }) => {
+		const user = state.get('user')
+		await flowDynamic(await procesarMensaje(ctx.from, ctx.body, user.testActual))
 	}
 )
 

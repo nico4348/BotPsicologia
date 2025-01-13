@@ -5,8 +5,7 @@
 	Cuestionario correspondiente.
 	--------------------------------------------------------------------
 */
-
-import { getTipoTest } from './queries/queries.js'
+import axios from 'axios'
 import { iniciarCuestionario } from './cuestionario.js'
 let esPrimeraVez = true
 const mensajesTest = {
@@ -20,19 +19,18 @@ const mensajesTest = {
 	suic: 'A continuación, se le presentará la Escala de Ideación Suicida. Esta herramienta tiene como objetivo evaluar la intencionalidad suicida o el grado de seriedad e intensidad con el que alguien ha pensado o está pensando en suicidarse. Por favor, lea cada ítem cuidadosamente y seleccione la respuesta que mejor describa cómo se ha sentido o pensado en los últimos tiempos, incluyendo el día de hoy.',
 }
 
-export async function procesarMensaje(ctx, numeroUsuario, mensaje, user) {
-	const tipoTest = await getTipoTest(numeroUsuario) // Obtener el tipo de test asociado al usuario
+export async function procesarMensaje(numeroUsuario, mensaje, tipoTest) {
 	console.log(`Tipo de test: ${tipoTest}`)
-
-	// Variable local para verificar si es la primera vez
 	console.log(esPrimeraVez)
 
 	if (esPrimeraVez) {
 		esPrimeraVez = false
-		return mensajesTest[user.test]
+		axios.post('http://localhost:3000/v1/messages', {
+			number: 'numeroUsuario',
+			message: `${mensajesTest[tipoTest]}`,
+		})
 	}
 
-	// Iniciar el cuestionario dinámico y guardar el resultado en historial
 	const resultadoCuestionario = await iniciarCuestionario(numeroUsuario, mensaje, tipoTest)
 
 	return resultadoCuestionario // Responder al usuario con el resultado del cuestionario

@@ -119,3 +119,62 @@ export const switchAyudaPsicologica = async (numero, opcion) => {
 }
 
 //---------------------------------------------------------------------------------------------------------
+
+//Guardar puntaje en usuario
+
+export const savePuntajeUsuario = async (telefono, puntaje, jsonPreg, tipoTest) => {
+	return await seleccionarModelo(tipoTest).update({
+		where: { telefono },
+		data: {
+			Puntaje: puntaje,
+			resPreg: jsonPreg,
+		},
+	})
+}
+
+//---------------------------------------------------------------------------------------------------------
+
+// Obtener el puntaje y pregunta actual.
+export const getEstadoCuestionario = async (telefono, tipoTest) => {
+	const info = await seleccionarModelo(tipoTest).findUnique({
+		where: { telefono },
+		select: {
+			Puntaje: true,
+			preguntaActual: true,
+			resPreg: true,
+		},
+	})
+	return info
+}
+
+//---------------------------------------------------------------------------------------------------------
+
+// Guardar el puntaje y pregunta actual.
+export const saveEstadoCuestionario = async (
+	telefono,
+	puntaje,
+	preguntaActual,
+	resPreg,
+	tipoTest
+) => {
+	return await seleccionarModelo(tipoTest).update({
+		where: { telefono },
+		data: {
+			Puntaje: puntaje,
+			preguntaActual: preguntaActual,
+			resPreg: resPreg,
+		},
+	})
+}
+//---------------------------------------------------------------------------------------------------------
+
+// Función para seleccionar el modelo adecuado basado en el tipo de test
+function seleccionarModelo(tipoTest) {
+	if (tipoTest != 'ghq12') {
+		return prisma.tests
+	} else {
+		return prisma.ghq12
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------
