@@ -20,14 +20,24 @@ export const iniciarCuestionario = async (numeroUsuario, msg, tipoTest) => {
 
 	try {
 		let estado = await getEstadoCuestionario(numeroUsuario, tipoTest)
+		console.log(estado)
+		console.log(msg)
+		console.log(estado)
+		console.log(tipoTest)
 
 		// Si no hay estado, inicializamos el cuestionario
 		if (estado.resPreg == null) {
+			let respuesta = apiCuest(msg, tipoTest)
+			console.log(respuesta)
+			respuesta = Number(respuesta)
+			console.log(respuesta)
+
 			estado = {
-				puntaje: 0,
+				Puntaje: 0,
 				preguntaActual: 0,
 				resPreg: resPreg,
 			}
+			console.log(estado)
 			await saveEstadoCuestionario(
 				numeroUsuario,
 				estado.Puntaje,
@@ -39,7 +49,9 @@ export const iniciarCuestionario = async (numeroUsuario, msg, tipoTest) => {
 		}
 
 		let respuesta = apiCuest(msg, tipoTest)
+		console.log(respuesta)
 		respuesta = Number(respuesta)
+		console.log(respuesta)
 
 		if (estado.preguntaActual < preguntas.length) {
 			estado.Puntaje += respuesta
@@ -55,7 +67,7 @@ export const iniciarCuestionario = async (numeroUsuario, msg, tipoTest) => {
 					tipoTest
 				)
 				await savePuntajeUsuario(numeroUsuario, estado.Puntaje, estado.resPreg, tipoTest)
-				return evaluarResultado(estado.Puntaje, umbrales)
+				return await evaluarResultado(estado.Puntaje, umbrales)
 			}
 
 			estado.preguntaActual += 1
@@ -69,15 +81,15 @@ export const iniciarCuestionario = async (numeroUsuario, msg, tipoTest) => {
 
 			return preguntas[estado.preguntaActual]
 		} else {
-			return evaluarResultado(estado.Puntaje, umbrales)
+			return await evaluarResultado(estado.Puntaje, umbrales)
 		}
 	} catch (error) {
-		let estado = await getEstadoCuestionario(numeroUsuario, tipoTest)
-		return preguntas[estado.preguntaActual]
+		console.log('error en iniciar cuestionario')
+		throw new Error('Hubo un error en iniciar cuestionario')
 	}
 }
 
-const evaluarResultado = (puntaje, umbrales) => {
+const evaluarResultado = async (puntaje, umbrales) => {
 	if (puntaje <= umbrales.bajo.max) {
 		return `El cuestionario ha terminado. Su puntaje final es: ${puntaje} 🟢 \n${umbrales.bajo.mensaje}`
 	} else if (puntaje >= umbrales.medio.min && puntaje <= umbrales.medio.max) {
@@ -85,6 +97,7 @@ const evaluarResultado = (puntaje, umbrales) => {
 	} else if (puntaje >= umbrales.alto.min) {
 		return `El cuestionario ha terminado. Su puntaje final es: ${puntaje} 🔴 \n${umbrales.alto.mensaje}`
 	} else {
+		console.log('first')
 		return 'Hubo un error en su puntaje'
 	}
 }

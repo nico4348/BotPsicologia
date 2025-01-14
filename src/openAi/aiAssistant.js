@@ -7,6 +7,7 @@
 */
 
 import OpenAI from 'openai'
+import axios from 'axios'
 import { obtenerHist, saveHist, switchAyudaPsicologica } from '../queries/queries.js'
 import { assistantPrompt } from './prompts.js'
 import { apiBack } from './aiBack.js'
@@ -23,7 +24,7 @@ async function cambiarEstado(num, hist) {
 	const opcion = parseInt(
 		await apiBack(
 			hist,
-			`Devuelve "0" si el usuario no quiere ayuda. De lo contrario, si el usuario SI quiere ayuda devuelve "2"
+			`Devuelve "1" si el usuario no quiere ayuda. De lo contrario, si el usuario SI quiere ayuda devuelve "2"
 			IMPORTANTE: SOLO DEVOLVERAS EL NUMERO`
 		)
 	)
@@ -44,9 +45,14 @@ const tools = [
 		function: {
 			name: 'cambiarEstado',
 			description: `
-			Activacion: Se llamará esta funcion cuando el usuario responda si quiere o no ayuda psicologica.
-			Requisitos: Que el asistente haya ofrecido la ayuda y que el usuario haya dicho si o no (en ambas se activa)
-	`,
+            IMPORTANTE: Esta función SOLO debe ser llamada cuando:
+            1. El usuario esté interesado en recibir ayuda Psicologia
+			2. Si el usuario menciona que quiere una cita de Psicologia
+            
+            NO llamar esta función:
+            - Si el usuario solo está conversando normalmente
+            - Si el usuario menciona temas de psicología pero no en respuesta a un ofrecimiento de ayuda
+            `,
 			parameters: {
 				type: 'object',
 				properties: {},
@@ -63,7 +69,8 @@ export async function apiAssistant1(numero, msg) {
 		role: 'system',
 		content: assistantPrompt,
 	})
-	if (Math.floor(Math.random() * 10) <= 2) {
+	if (Math.floor(Math.random() * 10) <= 4) {
+		console.log('Numero aleatorio')
 		conversationHistory.push({
 			role: 'system',
 			content: `\nIMPORTANTE:\nDEBES preguntar al usuario si quiere recibir ayuda psicológica. 
@@ -78,25 +85,23 @@ export async function apiAssistant1(numero, msg) {
 			model: 'gpt-4o-mini',
 			messages: conversationHistory,
 			tools: tools,
+			tool_choice: 'auto', //* Importante usar tool choice
 		})
 
 		const assistantMessage = response.choices[0].message.content
 		const toolCalls = response.choices[0].message.tool_calls
 
 		if (toolCalls && toolCalls.length > 0) {
+			console.log('entra a calls')
 			for (const call of toolCalls) {
 				if (call.type === 'function' && call.function.name === 'cambiarEstado') {
 					await cambiarEstado(numero, conversationHistory)
-					const response = await aiRegister.chat.completions.create({
-						model: 'gpt-4o-mini',
-						messages: conversationHistory,
+					await axios.post('http://localhost:3000/v1/messages', {
+						number: numero,
+						message:
+							'Con el fin de brindarte la mejor atención posible, te invitamos a realizar estas dos sencillos Tests. Tu colaboración es muy importante para nosotros. ¿Empezamos?',
 					})
-
-					const assistantMessage = response.choices[0].message.content
-					conversationHistory.push({ role: 'assistant', content: assistantMessage })
-					conversationHistory.shift()
-					await saveHist(numero, conversationHistory)
-					return assistantMessage
+					return true
 				}
 			}
 		} else {

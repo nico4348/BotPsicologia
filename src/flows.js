@@ -1,10 +1,11 @@
 //---------------------------------------------------------------------------------------------------------
 
 import { addKeyword, utils, EVENTS } from '@builderbot/bot'
-import { obtenerUsuario } from './queries/queries'
+import { obtenerUsuario, changeTest, getInfoCuestionario } from './queries/queries'
 import { apiRegister } from './openAi/aiRegister'
 import { apiAssistant1, apiAssistant2 } from './openAi/aiAssistant'
 import { procesarMensaje } from './proccesTest.js'
+import { apiBack1 } from './openAi/aiBack.js'
 
 //---------------------------------------------------------------------------------------------------------
 
@@ -14,10 +15,8 @@ export const welcomeFlow = addKeyword(EVENTS.WELCOME).addAction(
 
 		if (user.apellido) {
 			await state.update({ user: user })
-			console.log('Usuario ya registrado')
 			return gotoFlow(assistantFlow)
 		} else {
-			console.log('Usuario no registrado')
 			return gotoFlow(registerFlow)
 		}
 	}
@@ -36,10 +35,13 @@ export const registerFlow = addKeyword(utils.setEvent('REGISTER_FLOW')).addActio
 export const assistantFlow = addKeyword(utils.setEvent('ASSISTANT_FLOW')).addAction(
 	async (ctx, { flowDynamic, gotoFlow, state }) => {
 		const user = state.get('user')
-		console.log(user.ayudaPsicologica)
 		if (!user.ayudaPsicologica) {
-			console.log('0')
-			await flowDynamic(await apiAssistant2(ctx.from, ctx.body))
+			const ass2 = await apiAssistant2(ctx.from, ctx.body)
+			if (ass2 == true) {
+				return gotoFlow(testFlow)
+			} else {
+				await flowDynamic(ass2)
+			}
 		} else {
 			if (user.ayudaPsicologica == 2) {
 				return gotoFlow(testFlow)
@@ -56,7 +58,51 @@ export const assistantFlow = addKeyword(utils.setEvent('ASSISTANT_FLOW')).addAct
 export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 	async (ctx, { flowDynamic, state }) => {
 		const user = state.get('user')
-		await flowDynamic(await procesarMensaje(ctx.from, ctx.body, user.testActual))
+
+		// Validate procesarMensaje output
+		const message = await procesarMensaje(ctx.from, ctx.body, user.testActual)
+
+		if (!message || typeof message !== 'string') {
+			console.error('Error: procesarMensaje returned an invalid value.', { message })
+			await flowDynamic(
+				'Ocurrió un error procesando el mensaje. Por favor, inténtelo de nuevo.'
+			)
+			return
+		}
+
+		await flowDynamic(message)
+
+		console.log(
+			`Includes: ${message.includes('El cuestionario ha terminado.') === true} y userTest: ${
+				user.testActual === 'ghq12'
+			}`
+		)
+
+		if (message.includes('El cuestionario ha terminado.')) {
+			const { infoCues, preguntas } = await getInfoCuestionario(ctx.from, user.testActual)
+			const historialContent = `De las preguntas ${preguntas}, el usuario respondio asi: ${JSON.stringify(
+				infoCues //! falta
+			)}`
+			console.log(historialContent)
+			const accion = `
+				Debes analizar las respuestas del usuario y asignarle en lo que más grave está
+				Entre las siguientes opciones:
+				"dep"(depresión)
+				"ans"(ansiedad)
+				"estr"(estrés)
+				"suic"(ideacion suicida)
+				"calVida"(Calidad de vida)
+				Responde unicamente con "dep", "ans", "estr", "suic" o "calVida"
+				`
+
+			const test = await apiBack1(
+				user.historial.push({ role: 'system', content: historialContent }),
+				accion
+			)
+
+			const nuevoTest = await changeTest(ctx.from, test)
+			await flowDynamic(await procesarMensaje(ctx.from, ctx.body, nuevoTest))
+		}
 	}
 )
 

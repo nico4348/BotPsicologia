@@ -160,7 +160,6 @@ model salud {
 model ghq12 {
   idGhq12        String @id @unique @default(uuid())
   telefono       String @unique
-  tratDatos      String @default("")
   historial      Json?
   Puntaje        Int    @default(0)
   preguntaActual Int    @default(0)

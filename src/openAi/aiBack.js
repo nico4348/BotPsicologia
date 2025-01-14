@@ -30,3 +30,22 @@ export async function apiBack(conversationHistory, action) {
 		throw new Error('Hubo un problema al obtener la respuesta de la IA.')
 	}
 }
+
+export async function apiBack1(conversationHistory, action) {
+	try {
+		const hist = [...conversationHistory]
+		hist.push({ role: 'system', content: action }) // Agregar acción al final
+
+		const completion = await aiBack.chat.completions.create({
+			model: 'gpt-4o-mini',
+			messages: hist,
+			temperature: 0,
+		})
+
+		let responseBack = completion.choices[0].message.content
+		return responseBack
+	} catch (error) {
+		console.error('Error en la API de OpenAI:', error.message)
+		throw new Error('Hubo un problema al obtener la respuesta de la IA.')
+	}
+}

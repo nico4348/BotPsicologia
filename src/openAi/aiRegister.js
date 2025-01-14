@@ -97,7 +97,7 @@ export async function apiRegister(numero, msg) {
 					await register(conversationHistory, numero)
 
 					const answ =
-						'Perfecto, acaba de completar su registro, ahora le responderá nuestra Asistente Psicologica'
+						'Gracias por realizar tu registro.  Bienvenido! Estoy aquí para apoyarte en lo que necesites. Si en algún momento sientes que quieres hablar de algo o que te gustaría recibir ayuda psicológica, sólo dímelo. Mi prioridad es que te sientas bien y escuchado. '
 					conversationHistory.push({ role: 'assistant', content: answ })
 					conversationHistory.shift()
 					await saveHist(numero, conversationHistory)
