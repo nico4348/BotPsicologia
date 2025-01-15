@@ -79,13 +79,15 @@ export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 		)
 
 		if (message.includes('El cuestionario ha terminado.')) {
-			const { infoCues, preguntas } = await getInfoCuestionario(ctx.from, user.testActual)
-			const historialContent = `De las preguntas ${preguntas}, el usuario respondio asi: ${JSON.stringify(
-				infoCues //! falta
+			const { infoCues, preguntasString } = await getInfoCuestionario(
+				ctx.from,
+				user.testActual
+			)
+			const historialContent = `De las preguntas ${preguntasString}, el usuario respondio asi: ${JSON.stringify(
+				infoCues
 			)}`
-			console.log(historialContent)
-			const accion = `
-				Debes analizar las respuestas del usuario y asignarle en lo que más grave está
+
+			const accion = `Debes analizar las respuestas del usuario y asignarle en lo que más grave está
 				Entre las siguientes opciones:
 				"dep"(depresión)
 				"ans"(ansiedad)
@@ -93,12 +95,10 @@ export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 				"suic"(ideacion suicida)
 				"calVida"(Calidad de vida)
 				Responde unicamente con "dep", "ans", "estr", "suic" o "calVida"
-				`
-
-			const test = await apiBack1(
-				user.historial.push({ role: 'system', content: historialContent }),
-				accion
-			)
+			`
+			const hist = user.historial
+			hist.push({ role: 'system', content: historialContent })
+			const test = await apiBack1(hist, accion)
 
 			const nuevoTest = await changeTest(ctx.from, test)
 			await flowDynamic(await procesarMensaje(ctx.from, ctx.body, nuevoTest))

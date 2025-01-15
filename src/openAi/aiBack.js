@@ -33,7 +33,9 @@ export async function apiBack(conversationHistory, action) {
 
 export async function apiBack1(conversationHistory, action) {
 	try {
+		console.log(conversationHistory)
 		const hist = [...conversationHistory]
+		console.log(hist)
 		hist.push({ role: 'system', content: action }) // Agregar acción al final
 
 		const completion = await aiBack.chat.completions.create({
