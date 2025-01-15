@@ -169,7 +169,6 @@ export const getEstadoCuestionario = async (telefono, tipoTest) => {
 			})
 			return infoCues
 		}
-		console.log(infoCues)
 		return infoCues
 	} catch (error) {
 		console.error('Error obteniendo el estado:', error)
@@ -220,7 +219,6 @@ export const changeTest = async (numero, tipoTest) => {
 				testActual: tipoTest,
 			},
 		})
-		console.log(change.testActual)
 		return change.testActual
 	} catch (error) {
 		console.error('Error cambiando el test:', error)

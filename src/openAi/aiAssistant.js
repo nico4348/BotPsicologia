@@ -69,13 +69,17 @@ export async function apiAssistant1(numero, msg) {
 		role: 'system',
 		content: assistantPrompt,
 	})
-	if (Math.floor(Math.random() * 10) <= 4) {
+	if (Math.floor(Math.random() * 10) <= 7) {
+		let c = 0
+		c = c + 1
 		console.log('Numero aleatorio')
-		conversationHistory.push({
-			role: 'system',
-			content: `\nIMPORTANTE:\nDEBES preguntar al usuario si quiere recibir ayuda psicológica. 
-				para saber como cambiar el estado del usuario `,
-		})
+		if (c >= 3) {
+			conversationHistory.push({
+				role: 'system',
+				content: `\nIMPORTANTE:\nDEBES preguntar al usuario si quiere recibir ayuda psicológica. 
+					para saber como cambiar el estado del usuario `,
+			})
+		}
 	}
 
 	conversationHistory.push({ role: 'user', content: msg })
@@ -92,7 +96,6 @@ export async function apiAssistant1(numero, msg) {
 		const toolCalls = response.choices[0].message.tool_calls
 
 		if (toolCalls && toolCalls.length > 0) {
-			console.log('entra a calls')
 			for (const call of toolCalls) {
 				if (call.type === 'function' && call.function.name === 'cambiarEstado') {
 					await cambiarEstado(numero, conversationHistory)

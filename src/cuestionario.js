@@ -20,15 +20,10 @@ export const iniciarCuestionario = async (numeroUsuario, msg, tipoTest) => {
 
 	try {
 		let estado = await getEstadoCuestionario(numeroUsuario, tipoTest)
-		console.log(estado)
-		console.log(msg)
-		console.log(estado)
-		console.log(tipoTest)
 
 		// Si no hay estado, inicializamos el cuestionario
 		if (estado.resPreg == null) {
 			let respuesta = apiCuest(msg, tipoTest)
-			console.log(respuesta)
 			respuesta = Number(respuesta)
 			console.log(respuesta)
 
@@ -37,7 +32,6 @@ export const iniciarCuestionario = async (numeroUsuario, msg, tipoTest) => {
 				preguntaActual: 0,
 				resPreg: resPreg,
 			}
-			console.log(estado)
 			await saveEstadoCuestionario(
 				numeroUsuario,
 				estado.Puntaje,
@@ -49,13 +43,12 @@ export const iniciarCuestionario = async (numeroUsuario, msg, tipoTest) => {
 		}
 
 		let respuesta = apiCuest(msg, tipoTest)
-		console.log(respuesta)
 		respuesta = Number(respuesta)
-		console.log(respuesta)
-
+		if (respuesta == 9) {
+			return preguntas[estado.preguntaActual]
+		}
 		if (estado.preguntaActual < preguntas.length) {
 			estado.Puntaje += respuesta
-			console.log(estado.Puntaje)
 			estado.resPreg[respuesta].push(estado.preguntaActual + 1)
 
 			if (estado.preguntaActual + 1 >= preguntas.length) {
@@ -91,13 +84,12 @@ export const iniciarCuestionario = async (numeroUsuario, msg, tipoTest) => {
 
 const evaluarResultado = async (puntaje, umbrales) => {
 	if (puntaje <= umbrales.bajo.max) {
-		return `El cuestionario ha terminado. Su puntaje final es: ${puntaje} 🟢 \n${umbrales.bajo.mensaje}`
+		return `El cuestionario ha terminado. Su puntaje final es: ${puntaje} \n${umbrales.bajo.mensaje}`
 	} else if (puntaje >= umbrales.medio.min && puntaje <= umbrales.medio.max) {
-		return `El cuestionario ha terminado. Su puntaje final es: ${puntaje} 🟡 \n${umbrales.medio.mensaje}`
+		return `El cuestionario ha terminado. Su puntaje final es: ${puntaje} \n${umbrales.medio.mensaje}`
 	} else if (puntaje >= umbrales.alto.min) {
-		return `El cuestionario ha terminado. Su puntaje final es: ${puntaje} 🔴 \n${umbrales.alto.mensaje}`
+		return `El cuestionario ha terminado. Su puntaje final es: ${puntaje} \n${umbrales.alto.mensaje}`
 	} else {
-		console.log('first')
 		return 'Hubo un error en su puntaje'
 	}
 }
@@ -197,7 +189,7 @@ const cuestionariosConfig = {
 		],
 		umbrales: {
 			bajo: { max: 21, mensaje: 'Ansiedad saludable 🟢' },
-			medio: { min: 22, max: 36, mensaje: 'Ansiedad moderada 🟡' },
+			medio: { min: 22, max: 35, mensaje: 'Ansiedad moderada 🟡' },
 			alto: { min: 36, mensaje: 'Ansiedad severa 🔴' },
 		},
 		resPreg: {
@@ -227,7 +219,7 @@ const cuestionariosConfig = {
 		umbrales: {
 			bajo: { max: 19, mensaje: 'Estres saludable 🟢' },
 			medio: { min: 20, max: 25, mensaje: 'Estres moderado 🟡' },
-			alto: { min: 56, mensaje: 'Estres severo 🔴' },
+			alto: { min: 26, mensaje: 'Estres severo 🔴' },
 		},
 		resPreg: {
 			0: [],
@@ -261,7 +253,7 @@ const cuestionariosConfig = {
 		],
 		umbrales: {
 			bajo: { max: 1, mensaje: 'Sin indicativo de suicido 🟢' },
-			medio: { min: 2, max: 10, mensaje: 'Riesgo de suicido 🟡' },
+			medio: { min: 2, max: 37, mensaje: 'Alto riesgo de suicido 🔴' },
 			alto: { min: 38, mensaje: 'Alto riesgo de suicido 🔴' },
 		},
 		resPreg: {
@@ -302,7 +294,7 @@ const cuestionariosConfig = {
 		umbrales: {
 			bajo: { max: 33, mensaje: 'Calidad de vida baja 🔴' },
 			medio: { min: 34, max: 68, mensaje: 'Calidad de vida estable 🟡' },
-			alto: { min: 130, mensaje: 'Calidad de vida excelente 🟢' },
+			alto: { min: 69, mensaje: 'Calidad de vida excelente 🟢' },
 		},
 		resPreg: {
 			1: [],

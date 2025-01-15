@@ -20,11 +20,8 @@ const mensajesTest = {
 }
 
 export async function procesarMensaje(numeroUsuario, mensaje, tipoTest) {
-	console.log(`Tipo de test: ${tipoTest}`)
-
 	if (esPrimeraVez1 == true && tipoTest != 'ghq12') {
 		esPrimeraVez1 = false
-		console.log(`esprimeravez: ${esPrimeraVez1}`)
 
 		await axios.post('http://localhost:3000/v1/messages', {
 			number: numeroUsuario,
@@ -34,7 +31,6 @@ export async function procesarMensaje(numeroUsuario, mensaje, tipoTest) {
 
 	if (esPrimeraVez) {
 		esPrimeraVez = false
-		console.log(`esprimeravez: ${esPrimeraVez}`)
 
 		await axios.post('http://localhost:3000/v1/messages', {
 			number: numeroUsuario,
