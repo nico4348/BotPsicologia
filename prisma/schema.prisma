@@ -24,6 +24,8 @@ model informacionUsuario {
   historial        Json?
   flujo            String  @default("register")
 
+  practicanteAsignado String? // ID del practicante asignado permanentemente
+
   // Relación con ghq12
   ghq12 ghq12?
   tests tests?
@@ -61,7 +63,7 @@ model tests {
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-//Agendamientos:------------------------------------------------------------------------------------------------------------------------------------------------
+//Agendamientos:
 
 model consultorio {
   idConsultorio String  @id @unique @default(uuid())

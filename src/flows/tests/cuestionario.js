@@ -5,12 +5,12 @@
 	-----------------------------------------------------------
 */
 
-import { apiCuest } from './openAi/aiCuest.js'
+import { apiCuest } from './aiCuest.js'
 import {
 	getEstadoCuestionario,
 	saveEstadoCuestionario,
 	savePuntajeUsuario,
-} from './queries/queries.js'
+} from '../../queries/queries.js'
 
 export const iniciarCuestionario = async (numeroUsuario, msg, tipoTest) => {
 	const config = cuestionariosConfig[tipoTest]

@@ -8,9 +8,9 @@
 
 import OpenAI from 'openai'
 import axios from 'axios'
-import { obtenerHist, saveHist, switchAyudaPsicologica } from '../queries/queries.js'
-import { assistantPrompt } from './prompts.js'
-import { apiBack } from './aiBack.js'
+import { obtenerHist, saveHist, switchAyudaPsicologica } from '../../queries/queries.js'
+import { assistantPrompt } from '../../openAi/prompts.js'
+import { apiBack } from '../../openAi/aiBack.js'
 
 //---------------------------------------------------------------------------------------------------------
 

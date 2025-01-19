@@ -1,7 +1,7 @@
 import { createBot, createProvider, createFlow } from '@builderbot/bot'
 import { MysqlAdapter as Database } from '@builderbot/database-mysql'
 import { BaileysProvider as Provider } from '@builderbot/provider-baileys'
-import { welcomeFlow, registerFlow, assistantFlow, testFlow, agendFlow } from './flows'
+import { welcomeFlow, registerFlow, assistantFlow, testFlow, agendFlow } from './flows/flows.js'
 
 const PORT = process.env.PORT ?? 3008
 

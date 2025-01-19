@@ -1,11 +1,11 @@
 //---------------------------------------------------------------------------------------------------------
 
 import { addKeyword, utils, EVENTS } from '@builderbot/bot'
-import { obtenerUsuario, changeTest, getInfoCuestionario, switchFlujo } from './queries/queries'
-import { apiRegister } from './openAi/aiRegister'
-import { apiAssistant1, apiAssistant2 } from './openAi/aiAssistant'
-import { procesarMensaje } from './proccesTest.js'
-import { apiBack1 } from './openAi/aiBack.js'
+import { obtenerUsuario, changeTest, getInfoCuestionario, switchFlujo } from '../queries/queries.js'
+import { apiRegister } from './register/aiRegister.js'
+import { apiAssistant1, apiAssistant2 } from './assist/aiAssistant.js'
+import { procesarMensaje } from './tests/proccesTest.js'
+import { apiBack1 } from '../openAi/aiBack.js'
 
 //---------------------------------------------------------------------------------------------------------
 
