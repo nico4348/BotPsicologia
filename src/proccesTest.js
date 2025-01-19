@@ -20,6 +20,7 @@ const mensajesTest = {
 }
 
 export async function procesarMensaje(numeroUsuario, mensaje, tipoTest) {
+	console.log(tipoTest)
 	if (esPrimeraVez1 == true && tipoTest != 'ghq12') {
 		esPrimeraVez1 = false
 

@@ -135,6 +135,24 @@ export const switchAyudaPsicologica = async (numero, opcion) => {
 
 //---------------------------------------------------------------------------------------------------------
 
+export const switchFlujo = async (numero, flujo) => {
+	try {
+		await prisma.informacionUsuario.update({
+			where: {
+				telefonoPersonal: numero,
+			},
+			data: {
+				flujo: flujo,
+			},
+		})
+	} catch (error) {
+		console.error('Error al switchear el flujo:', error)
+		throw new Error('Hubo un problema al switchear el flujo')
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------
+
 //Guardar puntaje en usuario
 
 export const savePuntajeUsuario = async (telefono, puntaje, jsonPreg, tipoTest) => {

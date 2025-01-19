@@ -7,7 +7,7 @@
 */
 
 import OpenAI from 'openai'
-import { obtenerHist, saveHist, registrarUsuario } from '../queries/queries.js'
+import { obtenerHist, saveHist, registrarUsuario, switchFlujo } from '../queries/queries.js'
 import { registerPrompt } from './prompts.js'
 
 //---------------------------------------------------------------------------------------------------------
@@ -42,6 +42,7 @@ async function register(conversationHistory, number) {
 	const { nombre, apellido, correo, tipoDocumento, documento } = responseJson
 
 	await registrarUsuario(nombre, apellido, correo, tipoDocumento, documento, number)
+	await switchFlujo(number, 'assistantFlow')
 
 	return {
 		success: true,
