@@ -29,133 +29,11 @@ model informacionUsuario {
   tests tests?
 
   // Agendamiento
-  disponibilidad        String                  @default("")
-  citas                 cita[]
-  historialAgendamiento historialAgendamiento[]
-
-  // Relaciones
-  chats        chats[]      @relation("conexionChats")
-  credenciales credencial[] @relation("conexionCredencial")
-
-  // Sociodemográfico
-  informacionPersonal informacionPersonal[] @relation("conexionInformacionPersonal")
-  condicionesVivienda condicionesvivienda[] @relation("conexionCondicionesVivienda")
-  educacion           educacion[]           @relation("conexionEducacion")
-  situacionlaboral    situacionlaboral[]    @relation("conexionSituacionLaboral")
-  salud               salud[]               @relation("conexionSalud")
-
-  @@map("informacion_usuario")
+  disponibilidad String @default("")
+  citas          cita[]
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-//Asistente Psicologico:------------------------------------------------------------------------------------------------------------------------------------------------
-model chats {
-  idchat       String   @id @unique @default(uuid())
-  idUsuario    String
-  fechaHora    DateTime @default(now())
-  conversacion Json
-
-  usuarioChats informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionChats")
-
-  @@map("chats")
-}
-
-model credencial {
-  idCredencial String @id @unique @default(uuid())
-  idUsuario    String
-  usuario      String
-  contrasena   String
-  rol          String @default("user")
-
-  usuarioCredencial informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionCredencial")
-
-  @@map("credencial")
-}
-
-//Sociodemografico:
-model informacionPersonal {
-  idinformacionPersonal String @id @unique @default(uuid())
-  idUsuario             String
-
-  edad          Int
-  sexo          String
-  genero        String
-  estadocivil   String
-  hijosnum      Int
-  personascargo Int
-  vivienda      String
-  localidad     String
-  tipovivienda  String
-  familiaresnum Int
-  estrato       Int
-  etnico        String
-
-  usuarioInformacionPersonal informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionInformacionPersonal")
-
-  @@map("informacionPersonal")
-}
-
-model condicionesvivienda {
-  idcondicionesvivienda String @id @unique @default(uuid())
-  idUsuario             String
-  hacinamiento          String
-  violencia             String
-  servicios             Json
-  problemas             Json
-  tipozona              String
-
-  usuarioCondicionesVivienda informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionCondicionesVivienda")
-
-  @@map("condicionesvivienda")
-}
-
-model educacion {
-  ideducacion      String @id @unique @default(uuid())
-  idUsuario        String
-  tipocolegio      String
-  nivelescolaridad String
-  carrera          String
-  periodo          String
-  motivo           String
-  matedificulta    Json
-  nivelingles      String
-
-  usuarioeducacion informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionEducacion")
-
-  @@map("educacion")
-}
-
-model situacionlaboral {
-  idsituacionlaboral String @id @unique @default(uuid())
-  idUsuario          String
-  situacion          String
-  ingresos           String
-  sector             String
-  jornada            String
-  ascenso            String
-
-  usuariosituacionlaboral informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionSituacionLaboral")
-
-  @@map("situacionlaboral")
-}
-
-model salud {
-  idsalud         String @id @unique @default(uuid())
-  idUsuario       String
-  enfermecronica  String
-  discapacidad    String
-  suspsicoactivas String
-  alcohol         String
-  Internet        String
-  nicotina        String
-  eps             String
-  asispsicologo   String
-
-  usuariosalud informacionUsuario @relation(fields: [idUsuario], references: [idUsuario], name: "conexionSalud")
-
-  @@map("salud")
-}
 
 //GHQ12 + Tests:
 model ghq12 {
@@ -193,17 +71,6 @@ model consultorio {
   citas cita[] // Relación con cita
 }
 
-model historialAgendamiento {
-  idHistAgendamiento String  @id @unique @default(uuid())
-  numeroUsuario      String  @unique
-  citaAgendada       Boolean @default(false)
-  tratDatos          String  @default("")
-  agendamiento       Boolean @default(false)
-  historial          Json?
-
-  usuario informacionUsuario @relation(fields: [numeroUsuario], references: [telefonoPersonal]) // Relación con informacionUsuario
-}
-
 model practicante {
   idPracticante    String @id @unique @default(uuid())
   numero_documento String @unique
@@ -229,18 +96,3 @@ model cita {
   usuario     informacionUsuario @relation(fields: [idUsuario], references: [idUsuario]) // Relación con informacionUsuario
   practicante practicante        @relation(fields: [idPracticante], references: [idPracticante]) // Relación con practicante
 }
-
-// Inserte historial clinico
-
-// model HistorialClinico {
-//   id              Int      @id @default(autoincrement())
-//   motivo_consulta String   @db.VarChar(100)
-//   remitido        String   @db.VarChar(100)
-//   diagnostico     String   @db.VarChar(200)
-//   tratamiento     String   @db.VarChar(200)
-//   estado_proceso  String   @db.VarChar(50)
-//   pacienteId      BigInt
-//   citaId          Int
-//   Cita            Cita     @relation(fields: [citaId], references: [id_cita])
-//   Paciente        Paciente @relation(fields: [pacienteId], references: [numero_documento])
-// }
