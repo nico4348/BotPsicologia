@@ -276,4 +276,21 @@ function seleccionarModelo(tipoTest) {
 
 //---------------------------------------------------------------------------------------------------------
 
+export const actualizarDisp = async (numero, disp) => {
+	try {
+		const change = await prisma.informacionUsuario.update({
+			where: {
+				telefonoPersonal: numero,
+			},
+			data: {
+				disponibilidad: disp,
+			},
+		})
+		return change
+	} catch (error) {
+		console.error('Error cambiando el test:', error)
+		throw new Error('Hubo un problema cambiando el test.')
+	}
+}
+
 //---------------------------------------------------------------------------------------------------------

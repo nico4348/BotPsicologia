@@ -3,15 +3,12 @@
 //   }
 //IMPORTANTE CREAR ESPACIO PARA EL ID DEL PRACTICANTE EN LA INFO DEL USUARIO!!!!
 
-const { PrismaClient } = require('@prisma/client')
-const prisma = new PrismaClient()
+import { prisma } from '../../queries/queries.js'
 
 export async function controladorAgendamiento(datosUsuario) {
 	try {
-		const horarioUsuario = JSON.parse(datosUsuario.disponibilidad || '{}')
-		if (Object.keys(horarioUsuario).length === 0) {
-			throw new Error('Usuario no tiene horarios disponibles registrados')
-		}
+		const horarioUsuario = datosUsuario.disponibilidad
+		console.log(horarioUsuario)
 
 		let practicanteSeleccionado
 		let horarioCoincidente
@@ -27,7 +24,7 @@ export async function controladorAgendamiento(datosUsuario) {
 				throw new Error('Practicante asignado no encontrado')
 			}
 
-			const horarioPracticante = JSON.parse(practicanteSeleccionado.horario)
+			const horarioPracticante = practicanteSeleccionado.horario
 			const coincidencias = encontrarHorariosCoincidentes(horarioUsuario, horarioPracticante)
 
 			if (coincidencias.length > 0) {
@@ -40,7 +37,7 @@ export async function controladorAgendamiento(datosUsuario) {
 			const practicantes = await prisma.practicante.findMany()
 
 			for (const practicante of practicantes) {
-				const horarioPracticante = JSON.parse(practicante.horario)
+				const horarioPracticante = practicante.horario
 				const coincidencias = encontrarHorariosCoincidentes(
 					horarioUsuario,
 					horarioPracticante
@@ -102,7 +99,7 @@ export async function controladorAgendamiento(datosUsuario) {
 		})
 
 		// Actualizar horario del practicante
-		const horarioPracticanteActualizado = JSON.parse(practicanteSeleccionado.horario)
+		const horarioPracticanteActualizado = practicanteSeleccionado.horario
 		const horaIndex = horarioPracticanteActualizado[horarioCoincidente.dia].indexOf(
 			horarioCoincidente.horas[0]
 		)
@@ -113,7 +110,7 @@ export async function controladorAgendamiento(datosUsuario) {
 		await prisma.practicante.update({
 			where: { idPracticante: practicanteSeleccionado.idPracticante },
 			data: {
-				horario: JSON.stringify(horarioPracticanteActualizado),
+				horario: horarioPracticanteActualizado,
 			},
 		})
 

@@ -6,6 +6,7 @@ import { apiRegister } from './register/aiRegister.js'
 import { apiAssistant1, apiAssistant2 } from './assist/aiAssistant.js'
 import { procesarMensaje } from './tests/proccesTest.js'
 import { apiBack1 } from '../openAi/aiBack.js'
+import { apiAgend } from './agend/aiAgend.js'
 
 //---------------------------------------------------------------------------------------------------------
 
@@ -120,9 +121,9 @@ export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 //---------------------------------------------------------------------------------------------------------
 
 export const agendFlow = addKeyword(utils.setEvent('AGEND_FLOW')).addAction(
-	async (ctx, { flowDynamic }) => {
-		console.log('a')
-		await flowDynamic('a')
+	async (ctx, { flowDynamic, state }) => {
+		const user = state.get('user')
+		await flowDynamic(await apiAgend(ctx.from, ctx.body, user))
 	}
 )
 

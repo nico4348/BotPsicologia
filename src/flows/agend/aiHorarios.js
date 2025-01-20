@@ -1,10 +1,10 @@
 import OpenAI from 'openai'
 
-const aiJson = new OpenAI({
+const aiHorarios = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 })
 
-export async function apiJson(msg) {
+export async function apiHorarios(msg) {
 	try {
 		const hist = [
 			{
@@ -29,24 +29,29 @@ export async function apiJson(msg) {
 							mie: [ "13:00", "14:00", "15:00", "16:00", "17:00" ],
 						}
 
+						HORARIO DE ATENCION:
+						Entre semana: 08:00 - 17:00
+						Sabado: 08:00 - 11:00
+
 						Nota: ignora las tildes (en caso de miercoles: 'mie')
 						Importante: Hazlo en formato 24 horas.
 						teniendo en cuenta que el horario laboral va desde las 06:00 a las 18:00 de lunes a sabado (ignora los domingos)
+						Si el dia está vacio, significa que puede todo el dia (dentro del horario de atencion 8:00 - 17:00)
 						Si el array del horario está vacio no pongas el dia`,
 			},
 		]
 
 		hist.push({ role: 'user', content: msg })
 
-		const completion = await aiJson.chat.completions.create({
+		const completion = await aiHorarios.chat.completions.create({
 			model: 'gpt-4o-mini',
 			messages: hist,
 			response_format: { type: 'json_object' },
 		})
 
-		let responseJson = completion.choices[0].message.content
-		responseJson = JSON.parse(responseJson)
-		return responseJson
+		let responseHorarios = completion.choices[0].message.content
+		responseHorarios = JSON.parse(responseHorarios)
+		return responseHorarios
 	} catch (error) {
 		console.error('Error en la API de OpenAI:', error.message)
 		throw new Error('Hubo un problema al obtener la respuesta de la IA.')

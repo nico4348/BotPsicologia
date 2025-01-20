@@ -14,7 +14,6 @@ model informacionUsuario {
   apellido         String?
   correo           String? @unique
   telefonoPersonal String  @unique
-  telefonoFamiliar String? @unique
   documento        String? @unique
   tipoDocumento    String  @default("CC")
   testActual       String  @default("ghq12")
@@ -31,7 +30,7 @@ model informacionUsuario {
   tests tests?
 
   // Agendamiento
-  disponibilidad String @default("")
+  disponibilidad Json   @default("{}")
   citas          cita[]
 }
 
@@ -82,7 +81,7 @@ model practicante {
   estrato          String
   barrio           String
   localidad        String
-  horario          String
+  horario          Json
 
   citas cita[] // Relación con cita
 }
