@@ -109,6 +109,8 @@ export async function apiAgend(numero, msg) {
 
 async function saveDisp(disp, numero) {
 	try {
+		//! Añadir la validacion de si el usuario ya tiene una cita
+
 		const horario = await apiHorarios(disp)
 		const user = await actualizarDisp(numero, horario)
 		await controladorAgendamiento(user)

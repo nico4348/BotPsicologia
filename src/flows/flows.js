@@ -3,7 +3,8 @@
 import { addKeyword, utils, EVENTS } from '@builderbot/bot'
 import { obtenerUsuario, changeTest, getInfoCuestionario, switchFlujo } from '../queries/queries.js'
 import { apiRegister } from './register/aiRegister.js'
-import { apiAssistant1, apiAssistant2 } from './assist/aiAssistant.js'
+import { apiAssistant1 } from './assist/aiAssistant.js'
+import { apiAssistant2 } from './assist/assistant2.js'
 import { procesarMensaje } from './tests/proccesTest.js'
 import { apiBack1 } from '../openAi/aiBack.js'
 import { apiAgend } from './agend/aiAgend.js'
@@ -70,7 +71,6 @@ export const assistantFlow = addKeyword(utils.setEvent('ASSISTANT_FLOW')).addAct
 export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 	async (ctx, { flowDynamic, gotoFlow, state }) => {
 		const user = state.get('user')
-		console.log(ctx.from, '\n', user.testActual)
 		// Validate procesarMensaje output
 		const message = await procesarMensaje(ctx.from, ctx.body, user.testActual)
 
