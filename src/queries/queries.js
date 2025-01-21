@@ -295,7 +295,45 @@ export const actualizarDisp = async (numero, disp) => {
 
 //---------------------------------------------------------------------------------------------------------
 
-export const obtenerPracticante = async (documento) => {
+//* ABAJO IRAN LAS QUERIES PARA LOS ENDPONTS
+
+//---------------------------------------------------------------------------------------------------------
+
+export const getUsuario = async (documento) => {
+	try {
+		let user = await prisma.informacionUsuario.findUnique({
+			where: {
+				documento: documento,
+			},
+			select: {
+				idUsuario: true,
+				nombre: true,
+				apellido: true,
+				correo: true,
+				telefonoPersonal: true,
+				documento: true,
+				tipoDocumento: true,
+				testActual: true,
+				motivo: true,
+				ayudaPsicologica: true,
+				tratDatos: true,
+				flujo: true,
+				sesion: true,
+				estado: true,
+				disponibilidad: true,
+			},
+		})
+
+		return user
+	} catch (error) {
+		console.error('Error al obtener el Usuario:', error)
+		throw new Error('Hubo un problema al obtener el Usuario.')
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------
+
+export const getPracticante = async (documento) => {
 	try {
 		let pract = await prisma.practicante.findUnique({
 			where: {
@@ -311,5 +349,3 @@ export const obtenerPracticante = async (documento) => {
 }
 
 //---------------------------------------------------------------------------------------------------------
-
-console.log(await obtenerPracticante('1001234567'))
