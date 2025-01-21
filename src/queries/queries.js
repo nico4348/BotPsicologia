@@ -294,3 +294,22 @@ export const actualizarDisp = async (numero, disp) => {
 }
 
 //---------------------------------------------------------------------------------------------------------
+
+export const obtenerPracticante = async (documento) => {
+	try {
+		let pract = await prisma.practicante.findUnique({
+			where: {
+				numero_documento: documento,
+			},
+		})
+
+		return pract
+	} catch (error) {
+		console.error('Error al obtener el Practicante:', error)
+		throw new Error('Hubo un problema al obtener el Practicante.')
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------
+
+console.log(await obtenerPracticante('1001234567'))
