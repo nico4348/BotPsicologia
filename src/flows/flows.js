@@ -3,8 +3,8 @@
 import { addKeyword, utils, EVENTS } from '@builderbot/bot'
 import { obtenerUsuario, changeTest, getInfoCuestionario, switchFlujo } from '../queries/queries.js'
 import { apiRegister } from './register/aiRegister.js'
-import { apiAssistant1 } from './assist/assistant2.js'
-import { apiAssistant2 } from './assist/Aiassistant.js'
+import { apiAssistant1 } from './assist/Aiassistant.js'
+import { apiAssistant2 } from './assist/assistant2.js'
 import { procesarMensaje } from './tests/proccesTest.js'
 import { apiBack1 } from '../openAi/aiBack.js'
 import { apiAgend } from './agend/aiAgend.js'
@@ -48,7 +48,7 @@ export const assistantFlow = addKeyword(utils.setEvent('ASSISTANT_FLOW')).addAct
 	async (ctx, { flowDynamic, gotoFlow, state }) => {
 		const user = state.get('user')
 		if (!user.ayudaPsicologica) {
-			const ass2 = await apiAssistant2(ctx.from, ctx.body)
+			const ass2 = await apiAssistant2(ctx.from, ctx.body, user.idUsuario)
 			if (ass2 == true) {
 				return gotoFlow(testFlow)
 			} else {

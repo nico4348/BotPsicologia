@@ -1,4 +1,4 @@
-import { prisma, obtenerUsuario } from '../../queries/queries.js'
+import { prisma } from '../../queries/queries.js'
 
 // Consultar cita existente
 async function consultarCita(idUsuario) {
@@ -342,44 +342,44 @@ async function encontrarConsultorioDisponible(horario) {
 
 export { consultarCita, controladorAgendamiento, confirmarCita, modificarCita, eliminarCita }
 
-// Pruebas
-try {
-	const usuario = await obtenerUsuario('573127061275')
-	console.log('Usuario obtenido: \n', usuario)
+// // Pruebas
+// try {
+// 	const usuario = await obtenerUsuario('573022949109')
+// 	console.log('Usuario obtenido: \n', usuario)
 
-	const pruebaControladorAgendamiento = await controladorAgendamiento(usuario)
-	console.log('Resultado de controladorAgendamiento:  \n', pruebaControladorAgendamiento)
+// 	const pruebaControladorAgendamiento = await controladorAgendamiento(usuario)
+// 	console.log('Resultado de controladorAgendamiento:  \n', pruebaControladorAgendamiento)
 
-	if (
-		pruebaControladorAgendamiento &&
-		pruebaControladorAgendamiento.practicante &&
-		pruebaControladorAgendamiento.horarios.length > 0
-	) {
-		const pruebaConfirmarCita = await confirmarCita(
-			usuario,
-			pruebaControladorAgendamiento.practicante.idPracticante,
-			pruebaControladorAgendamiento.horarios[0]
-		)
-		console.log('Prueba confirmar cita:  \n', pruebaConfirmarCita)
+// 	if (
+// 		pruebaControladorAgendamiento &&
+// 		pruebaControladorAgendamiento.practicante &&
+// 		pruebaControladorAgendamiento.horarios.length > 0
+// 	) {
+// 		const pruebaConfirmarCita = await confirmarCita(
+// 			usuario,
+// 			pruebaControladorAgendamiento.practicante.idPracticante,
+// 			pruebaControladorAgendamiento.horarios[0]
+// 		)
+// 		console.log('Prueba confirmar cita:  \n', pruebaConfirmarCita)
 
-		if (pruebaConfirmarCita && pruebaConfirmarCita.cita) {
-			const pruebaModificarCita = await modificarCita(
-				pruebaConfirmarCita.cita.idCita,
-				pruebaControladorAgendamiento.horarios[1]
-			)
-			console.log('Prueba modificar cita:  \n', pruebaModificarCita)
+// 		if (pruebaConfirmarCita && pruebaConfirmarCita.cita) {
+// 			const pruebaModificarCita = await modificarCita(
+// 				pruebaConfirmarCita.cita.idCita,
+// 				pruebaControladorAgendamiento.horarios[1]
+// 			)
+// 			console.log('Prueba modificar cita:  \n', pruebaModificarCita)
 
-			const pruebaEliminarCita = await eliminarCita(pruebaConfirmarCita.cita.idCita)
-			console.log('Prueba eliminar cita:  \n', pruebaEliminarCita)
-		} else {
-			console.error('Error: No se pudo confirmar la cita.')
-		}
-	} else {
-		console.error('Error: No se encontraron horarios o practicantes disponibles.')
-	}
+// 			const pruebaEliminarCita = await eliminarCita(pruebaConfirmarCita.cita.idCita)
+// 			console.log('Prueba eliminar cita:  \n', pruebaEliminarCita)
+// 		} else {
+// 			console.error('Error: No se pudo confirmar la cita.')
+// 		}
+// 	} else {
+// 		console.error('Error: No se encontraron horarios o practicantes disponibles.')
+// 	}
 
-	const pruebaConsultarCita = await consultarCita(usuario.idUsuario)
-	console.log('Prueba consultar cita:  \n', pruebaConsultarCita)
-} catch (error) {
-	console.error('Error en las pruebas:', error)
-}
+// 	const pruebaConsultarCita = await consultarCita(usuario.idUsuario)
+// 	console.log('Prueba consultar cita:  \n', pruebaConsultarCita)
+// } catch (error) {
+// 	console.error('Error en las pruebas:', error)
+// }

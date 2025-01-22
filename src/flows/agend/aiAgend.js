@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import { obtenerHist, saveHist, actualizarDisp } from '../../queries/queries.js'
 import { promptAgend } from '../../openAi/prompts.js'
 import { apiHorarios } from './aiHorarios.js'
-import { controladorAgendamiento } from '../../../agendController.js'
+import { controladorAgendamiento, confirmarCita } from './agendController.js'
 
 //---------------------------------------------------------------------------------------------------------
 
@@ -113,7 +113,13 @@ async function saveDisp(disp, numero) {
 
 		const horario = await apiHorarios(disp)
 		const user = await actualizarDisp(numero, horario)
-		await controladorAgendamiento(user)
+		let tempCita = await controladorAgendamiento(user)
+		let cita = await confirmarCita(
+			user,
+			tempCita.practicante.idPracticante,
+			tempCita.horarios[0]
+		)
+		console.log(cita)
 		return horario
 	} catch (error) {
 		console.error('Error al guardar la disponibilidad:', error)

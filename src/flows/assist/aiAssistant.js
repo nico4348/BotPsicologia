@@ -120,27 +120,3 @@ export async function apiAssistant1(numero, msg) {
 }
 
 //---------------------------------------------------------------------------------------------------------
-
-export async function apiAssistant2(numero, msg) {
-	const conversationHistory = await obtenerHist(numero)
-	conversationHistory.unshift({ role: 'system', content: assistantPrompt })
-	conversationHistory.push({ role: 'user', content: msg })
-	try {
-		const response = await aiRegister.chat.completions.create({
-			model: 'gpt-4o-mini',
-			messages: conversationHistory,
-		})
-
-		const assistantMessage = response.choices[0].message.content
-
-		conversationHistory.push({ role: 'assistant', content: assistantMessage })
-		conversationHistory.shift()
-		await saveHist(numero, conversationHistory)
-		return assistantMessage
-	} catch (error) {
-		console.error('Error al obtener la respuesta de OpenAI:', error)
-		throw new Error('Hubo un error al procesar la solicitud.')
-	}
-}
-
-//---------------------------------------------------------------------------------------------------------
