@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import { obtenerHist, saveHist, actualizarDisp } from '../../queries/queries.js'
 import { promptAgend } from '../../openAi/prompts.js'
 import { apiHorarios } from './aiHorarios.js'
-import { controladorAgendamiento } from './agendController.js'
+import { controladorAgendamiento } from '../../../agendController.js'
 
 //---------------------------------------------------------------------------------------------------------
 

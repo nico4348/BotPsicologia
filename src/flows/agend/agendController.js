@@ -1,16 +1,44 @@
-import { prisma } from '../../queries/queries.js'
+import { prisma, obtenerUsuario } from '../../queries/queries.js'
 
-// Mantenemos el nombre original de la función exportada
-export async function controladorAgendamiento(datosUsuario) {
+// Consultar cita existente
+async function consultarCita(idUsuario) {
 	try {
-		//console.log('Datos del usuario:', datosUsuario);
+		const cita = await prisma.cita.findFirst({
+			where: { idUsuario },
+			include: {
+				practicante: {
+					select: {
+						nombre: true,
+						horario: true,
+					},
+				},
+				consultorio: {
+					select: {
+						nombre: true,
+					},
+				},
+			},
+		})
+
+		if (!cita) {
+			throw new Error('No se encontró ninguna cita para este usuario')
+		}
+
+		return cita
+	} catch (error) {
+		console.error('Error al consultar cita:', error)
+		throw error
+	}
+}
+
+// Buscar horarios disponibles y practicante
+async function controladorAgendamiento(datosUsuario) {
+	try {
 		const horarioUsuario = datosUsuario.disponibilidad
 		let practicanteSeleccionado
 		let horariosCoincidentes = []
 
-		// Verificar si el usuario ya tiene practicante asignado
 		if (datosUsuario.practicanteAsignado) {
-			//console.log('Usuario ya tiene practicante asignado:', datosUsuario.practicanteAsignado);
 			practicanteSeleccionado = await prisma.practicante.findUnique({
 				where: { idPracticante: datosUsuario.practicanteAsignado },
 			})
@@ -19,21 +47,19 @@ export async function controladorAgendamiento(datosUsuario) {
 				throw new Error('Practicante asignado no encontrado')
 			}
 
-			//console.log('Practicante seleccionado:', practicanteSeleccionado);
-			const horarioPracticante = practicanteSeleccionado.horario
-			horariosCoincidentes = encontrarHorariosCoincidentes(horarioUsuario, horarioPracticante)
-			//console.log('Horarios coincidentes:', horariosCoincidentes);
+			horariosCoincidentes = encontrarHorariosCoincidentes(
+				horarioUsuario,
+				practicanteSeleccionado.horario
+			)
 
 			if (horariosCoincidentes.length === 0) {
 				throw new Error('No hay horarios disponibles con el practicante asignado')
 			}
 
-			// Verificar disponibilidad de consultorios para cada horario
 			horariosCoincidentes = await verificarDisponibilidadConsultorios(
 				horariosCoincidentes,
 				practicanteSeleccionado.idPracticante
 			)
-			//console.log('Horarios coincidentes con consultorios disponibles:', horariosCoincidentes);
 
 			return {
 				success: true,
@@ -44,26 +70,20 @@ export async function controladorAgendamiento(datosUsuario) {
 				},
 			}
 		} else {
-			// Buscar nuevo practicante disponible
-			//console.log('Buscando nuevo practicante disponible');
 			const practicantes = await prisma.practicante.findMany()
 			const practicantesDisponibles = []
 
 			for (const practicante of practicantes) {
-				const horarioPracticante = practicante.horario
 				const coincidencias = encontrarHorariosCoincidentes(
 					horarioUsuario,
-					horarioPracticante
+					practicante.horario
 				)
-				//console.log('Coincidencias para practicante', practicante.idPracticante, ':', coincidencias);
 
 				if (coincidencias.length > 0) {
-					// Verificar disponibilidad de consultorios
 					const horariosVerificados = await verificarDisponibilidadConsultorios(
 						coincidencias,
 						practicante.idPracticante
 					)
-					//console.log('Horarios verificados para practicante', practicante.idPracticante, ':', horariosVerificados);
 
 					if (horariosVerificados.length > 0) {
 						practicantesDisponibles.push({
@@ -78,10 +98,8 @@ export async function controladorAgendamiento(datosUsuario) {
 				throw new Error('No se encontró disponibilidad con ningún practicante')
 			}
 
-			// Seleccionar un practicante aleatorio de los disponibles
 			const indiceAleatorio = Math.floor(Math.random() * practicantesDisponibles.length)
 			const seleccion = practicantesDisponibles[indiceAleatorio]
-			//console.log('Practicante seleccionado aleatoriamente:', seleccion);
 
 			return {
 				success: true,
@@ -99,86 +117,15 @@ export async function controladorAgendamiento(datosUsuario) {
 	}
 }
 
-function encontrarHorariosCoincidentes(horarioUsuario, horarioPracticante) {
-	const horariosCoincidentes = []
-	//console.log('Buscando horarios coincidentes entre usuario y practicante');
-
-	for (const dia in horarioUsuario) {
-		if (horarioPracticante[dia]) {
-			// Buscar todas las horas coincidentes
-			const horasCoincidentes = horarioUsuario[dia].filter((hora) =>
-				horarioPracticante[dia].includes(hora)
-			)
-
-			if (horasCoincidentes.length > 0) {
-				// Agregar cada hora como un horario individual
-				horasCoincidentes.forEach((hora) => {
-					horariosCoincidentes.push({
-						dia,
-						hora,
-					})
-				})
-			}
-		}
-	}
-
-	//console.log('Horarios coincidentes encontrados:', horariosCoincidentes);
-	return horariosCoincidentes
-}
-
-async function verificarDisponibilidadConsultorios(horarios) {
-	const horariosDisponibles = []
-	//console.log('Verificando disponibilidad de consultorios para horarios:', horarios);
-
-	for (const horario of horarios) {
-		const consultorioDisponible = await encontrarConsultorioDisponible(horario)
-		if (consultorioDisponible) {
-			horariosDisponibles.push(horario)
-		}
-	}
-
-	//console.log('Horarios disponibles con consultorios:', horariosDisponibles);
-	return horariosDisponibles
-}
-
-async function encontrarConsultorioDisponible(horario) {
-	//console.log('Buscando consultorio disponible para horario:', horario);
-	const consultorios = await prisma.consultorio.findMany({
-		where: { activo: true },
-	})
-
-	for (const consultorio of consultorios) {
-		const citasExistentes = await prisma.cita.findMany({
-			where: {
-				idConsultorio: consultorio.idConsultorio,
-				fechaHora: `${horario.dia} ${horario.hora}`,
-			},
-		})
-
-		if (citasExistentes.length === 0) {
-			//console.log('Consultorio disponible encontrado:', consultorio);
-			return consultorio
-		}
-	}
-
-	//console.log('No se encontró consultorio disponible para el horario:', horario);
-	return null
-}
-
-// Función para crear la cita cuando el usuario confirme
-export async function confirmarCita(datosUsuario, idPracticante, horarioSeleccionado) {
+// Confirmar y crear nueva cita
+async function confirmarCita(datosUsuario, idPracticante, horarioSeleccionado) {
 	try {
-		//console.log('Confirmando cita para usuario:', datosUsuario.idUsuario, 'con practicante:', idPracticante, 'en horario:', horarioSeleccionado);
-		// Buscar consultorio disponible
 		const consultorioDisponible = await encontrarConsultorioDisponible(horarioSeleccionado)
 
 		if (!consultorioDisponible) {
 			throw new Error('No hay consultorios disponibles para el horario seleccionado')
 		}
 
-		//console.log('Consultorio disponible encontrado:', consultorioDisponible);
-
-		// Si es primera cita, asignar practicante al usuario
 		if (!datosUsuario.practicanteAsignado) {
 			await prisma.informacionUsuario.update({
 				where: { idUsuario: datosUsuario.idUsuario },
@@ -186,10 +133,8 @@ export async function confirmarCita(datosUsuario, idPracticante, horarioSeleccio
 					practicanteAsignado: idPracticante,
 				},
 			})
-			//console.log('Practicante asignado al usuario:', idPracticante);
 		}
 
-		// Crear la cita
 		const nuevaCita = await prisma.cita.create({
 			data: {
 				idUsuario: datosUsuario.idUsuario,
@@ -198,9 +143,7 @@ export async function confirmarCita(datosUsuario, idPracticante, horarioSeleccio
 				fechaHora: `${horarioSeleccionado.dia} ${horarioSeleccionado.hora}`,
 			},
 		})
-		//console.log('Nueva cita creada:', nuevaCita);
 
-		// Actualizar horario del practicante
 		const practicante = await prisma.practicante.findUnique({
 			where: { idPracticante: idPracticante },
 		})
@@ -220,7 +163,6 @@ export async function confirmarCita(datosUsuario, idPracticante, horarioSeleccio
 				horario: horarioPracticanteActualizado,
 			},
 		})
-		//console.log('Horario del practicante actualizado:', horarioPracticanteActualizado);
 
 		return {
 			success: true,
@@ -241,6 +183,203 @@ export async function confirmarCita(datosUsuario, idPracticante, horarioSeleccio
 		throw error
 	}
 }
-// const a =  await controladorAgendamiento(await obtenerUsuario("573127061275"))
-// console.log(a)
-// console.log( await confirmarCita(await obtenerUsuario("573127061275"),a.practicante.idPracticante,{dia:"mie",hora:"13:00"}))
+
+// Modificar cita existente
+async function modificarCita(idCita, nuevoHorario) {
+	try {
+		const citaActual = await prisma.cita.findUnique({
+			where: { idCita },
+			include: {
+				practicante: true,
+			},
+		})
+
+		if (!citaActual) {
+			throw new Error('Cita no encontrada')
+		}
+
+		const horarioPracticante = citaActual.practicante.horario
+		if (!horarioPracticante[nuevoHorario.dia]?.includes(nuevoHorario.hora)) {
+			throw new Error('El practicante no está disponible en este horario')
+		}
+
+		const consultorioDisponible = await encontrarConsultorioDisponible(nuevoHorario)
+		if (!consultorioDisponible) {
+			throw new Error('No hay consultorios disponibles para el nuevo horario')
+		}
+
+		const horarioActualizado = { ...horarioPracticante }
+
+		const [diaAnterior, horaAnterior] = citaActual.fechaHora.split(' ')
+		if (!horarioActualizado[diaAnterior]) {
+			horarioActualizado[diaAnterior] = []
+		}
+		horarioActualizado[diaAnterior].push(horaAnterior)
+		horarioActualizado[diaAnterior].sort()
+
+		const horaIndex = horarioActualizado[nuevoHorario.dia].indexOf(nuevoHorario.hora)
+		if (horaIndex > -1) {
+			horarioActualizado[nuevoHorario.dia].splice(horaIndex, 1)
+		}
+
+		const citaModificada = await prisma.$transaction([
+			prisma.cita.update({
+				where: { idCita },
+				data: {
+					fechaHora: `${nuevoHorario.dia} ${nuevoHorario.hora}`,
+					idConsultorio: consultorioDisponible.idConsultorio,
+				},
+			}),
+			prisma.practicante.update({
+				where: { idPracticante: citaActual.idPracticante },
+				data: {
+					horario: horarioActualizado,
+				},
+			}),
+		])
+
+		return citaModificada[0]
+	} catch (error) {
+		console.error('Error al modificar cita:', error)
+		throw error
+	}
+}
+
+// Eliminar cita
+async function eliminarCita(idCita) {
+	try {
+		const cita = await prisma.cita.findUnique({
+			where: { idCita },
+			include: {
+				practicante: true,
+			},
+		})
+
+		if (!cita) {
+			throw new Error('Cita no encontrada')
+		}
+
+		const [dia, hora] = cita.fechaHora.split(' ')
+		const horarioActualizado = { ...cita.practicante.horario }
+
+		if (!horarioActualizado[dia]) {
+			horarioActualizado[dia] = []
+		}
+		horarioActualizado[dia].push(hora)
+		horarioActualizado[dia].sort()
+
+		await prisma.$transaction([
+			prisma.cita.delete({
+				where: { idCita },
+			}),
+			prisma.practicante.update({
+				where: { idPracticante: cita.idPracticante },
+				data: {
+					horario: horarioActualizado,
+				},
+			}),
+		])
+
+		return { success: true, message: 'Cita eliminada exitosamente' }
+	} catch (error) {
+		console.error('Error al eliminar cita:', error)
+		throw error
+	}
+}
+
+// Funciones auxiliares
+function encontrarHorariosCoincidentes(horarioUsuario, horarioPracticante) {
+	const horariosCoincidentes = []
+	for (const dia in horarioUsuario) {
+		if (horarioPracticante[dia]) {
+			const horasCoincidentes = horarioUsuario[dia].filter((hora) =>
+				horarioPracticante[dia].includes(hora)
+			)
+			if (horasCoincidentes.length > 0) {
+				horasCoincidentes.forEach((hora) => {
+					horariosCoincidentes.push({
+						dia,
+						hora,
+					})
+				})
+			}
+		}
+	}
+	return horariosCoincidentes
+}
+
+async function verificarDisponibilidadConsultorios(horarios) {
+	const horariosDisponibles = []
+	for (const horario of horarios) {
+		const consultorioDisponible = await encontrarConsultorioDisponible(horario)
+		if (consultorioDisponible) {
+			horariosDisponibles.push(horario)
+		}
+	}
+	return horariosDisponibles
+}
+
+async function encontrarConsultorioDisponible(horario) {
+	const consultorios = await prisma.consultorio.findMany({
+		where: { activo: true },
+	})
+
+	for (const consultorio of consultorios) {
+		const citasExistentes = await prisma.cita.findMany({
+			where: {
+				idConsultorio: consultorio.idConsultorio,
+				fechaHora: `${horario.dia} ${horario.hora}`,
+			},
+		})
+
+		if (citasExistentes.length === 0) {
+			return consultorio
+		}
+	}
+
+	return null
+}
+
+export { consultarCita, controladorAgendamiento, confirmarCita, modificarCita, eliminarCita }
+
+// Pruebas
+try {
+	const usuario = await obtenerUsuario('573127061275')
+	console.log('Usuario obtenido: \n', usuario)
+
+	const pruebaControladorAgendamiento = await controladorAgendamiento(usuario)
+	console.log('Resultado de controladorAgendamiento:  \n', pruebaControladorAgendamiento)
+
+	if (
+		pruebaControladorAgendamiento &&
+		pruebaControladorAgendamiento.practicante &&
+		pruebaControladorAgendamiento.horarios.length > 0
+	) {
+		const pruebaConfirmarCita = await confirmarCita(
+			usuario,
+			pruebaControladorAgendamiento.practicante.idPracticante,
+			pruebaControladorAgendamiento.horarios[0]
+		)
+		console.log('Prueba confirmar cita:  \n', pruebaConfirmarCita)
+
+		if (pruebaConfirmarCita && pruebaConfirmarCita.cita) {
+			const pruebaModificarCita = await modificarCita(
+				pruebaConfirmarCita.cita.idCita,
+				pruebaControladorAgendamiento.horarios[1]
+			)
+			console.log('Prueba modificar cita:  \n', pruebaModificarCita)
+
+			const pruebaEliminarCita = await eliminarCita(pruebaConfirmarCita.cita.idCita)
+			console.log('Prueba eliminar cita:  \n', pruebaEliminarCita)
+		} else {
+			console.error('Error: No se pudo confirmar la cita.')
+		}
+	} else {
+		console.error('Error: No se encontraron horarios o practicantes disponibles.')
+	}
+
+	const pruebaConsultarCita = await consultarCita(usuario.idUsuario)
+	console.log('Prueba consultar cita:  \n', pruebaConsultarCita)
+} catch (error) {
+	console.error('Error en las pruebas:', error)
+}

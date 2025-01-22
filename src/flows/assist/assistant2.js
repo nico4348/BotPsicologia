@@ -55,7 +55,7 @@ const tools = [
 
 //---------------------------------------------------------------------------------------------------------
 
-export async function apiAssistant1(numero, msg) {
+export async function apiAssistant2(numero, msg) {
 	const conversationHistory = await obtenerHist(numero)
 	conversationHistory.unshift({
 		role: 'system',

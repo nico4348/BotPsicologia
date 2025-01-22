@@ -69,37 +69,33 @@ const main = async () => {
 	//---------------------------------------------------------------------------------------------------------
 
 	adapterProvider.server.get(
-		'/v1/user/:searchQuery',
+		'/v1/front/:entity/:searchQuery',
 		handleCtx(async (bot, req, res) => {
-			const { searchQuery } = req.params // Extrae el parámetro correctamente
+			const { entity, searchQuery } = req.params // Extrae los parámetros correctamente
 
 			try {
-				const response = await getUsuario(searchQuery) // Lógica para obtener el practicante
-				console.log(response)
-				res.writeHead(200, { 'Content-Type': 'application/json' })
-				return res.end(JSON.stringify(response))
-			} catch (error) {
-				// Manejo de errores
-				console.error(error)
-				res.writeHead(500, { 'Content-Type': 'application/json' })
-				return res.end(
-					JSON.stringify({
-						status: 'error',
-						message: 'Error al consultar la base de datos',
-					})
-				)
-			}
-		})
-	)
+				let response
+				console.log(entity)
+				switch (entity) {
+					case 'user':
+						response = await getUsuario(searchQuery) // Lógica para obtener el usuario
+						break
 
-	adapterProvider.server.get(
-		'/v1/practicante/:searchQuery',
-		handleCtx(async (bot, req, res) => {
-			const { searchQuery } = req.params // Extrae el parámetro correctamente
+					case 'practicante':
+						response = await getPracticante(searchQuery) // Lógica para obtener el practicante
+						break
 
-			try {
-				const response = await getPracticante(searchQuery) // Lógica para obtener el practicante
-				console.log(response)
+					default:
+						// Si la entidad no es válida, devuelve un error
+						res.writeHead(400, { 'Content-Type': 'application/json' })
+						return res.end(
+							JSON.stringify({
+								status: 'error',
+								message: 'Entidad no válida',
+							})
+						)
+				}
+
 				res.writeHead(200, { 'Content-Type': 'application/json' })
 				return res.end(JSON.stringify(response))
 			} catch (error) {
