@@ -80,7 +80,7 @@ export const obtenerUsuario = async (numero) => {
 
 export const obtenerHist = async (numero) => {
 	try {
-		// Buscar el usuario por el número de teléfono
+		console.log('Obteniendo historial del usuario:', numero);
 		const user = await prisma.informacionUsuario.findUnique({
 			where: {
 				telefonoPersonal: numero,
@@ -88,14 +88,22 @@ export const obtenerHist = async (numero) => {
 			select: {
 				historial: true,
 			},
-		})
+		});
 
-		return user.historial
+		// Verificar si no se encontró el usuario
+		if (!user) {
+			console.error(`Usuario no encontrado con el número: ${numero}`);
+			throw new Error('Usuario no encontrado.');
+		}
+
+		// Retornar el historial del usuario encontrado
+		return user.historial;
 	} catch (error) {
-		console.error('Error al obtener o crear el historial del usuario:', error)
-		throw new Error('Hubo un problema al procesar la solicitud de historial.')
+		console.error('Error al obtener o crear el historial del usuario:', error);
+		throw new Error('Hubo un problema al procesar la solicitud de historial.');
 	}
-}
+};
+
 
 //---------------------------------------------------------------------------------------------------------
 
@@ -390,7 +398,7 @@ export const addWebUser = async (nombre, apellido, correo, tipoDocumento, docume
 
 //---------------------------------------------------------------------------------------------------------
 
-export const addWebPracticante = async (nombre, documento, tipoDocumento, genero, estrato, barrio, localidad, horario ) => {
+export const addWebPracticante = async (nombre, documento, tipoDocumento, genero, estrato, barrio, localidad, horario) => {
 
 	try {
 		const pract = await prisma.practicante.create({
@@ -418,33 +426,76 @@ export const addWebPracticante = async (nombre, documento, tipoDocumento, genero
 export const editWebUser = async (nombre, apellido, correo, tipoDocumento, documento, telefonoPersonal) => {
 
 	try {
-		const user = await prisma.informacionUsuario.update({
+		// Buscar al usuario por correo
+		let user = await prisma.informacionUsuario.findFirst({
 			where: {
-				OR: [
-					{ telefonoPersonal: telefonoPersonal },
-					{ documento: documento },
-					{ correo: correo }
-				]
-			},
-			data: {
-				nombre: nombre,
-				apellido: apellido,
 				correo: correo,
-				tipoDocumento: tipoDocumento,
-				documento: documento,
-			},
-		})
-		return user
-	} catch (error) {
-		console.error('Error al editar el usuario:', error)
-		throw new Error('Hubo un problema al editar el usuario.')
-	}
+			}
+		});
 
-}
+		// Si no se encuentra por correo, buscar por documento
+		if (!user) {
+			console.log("No se encontró usuario por correo, buscando por documento:", documento);
+			user = await prisma.informacionUsuario.findFirst({
+				where: {
+					documento: documento,
+				}
+			});
+		}
+
+		// Si no se encuentra por documento, buscar por teléfono
+		if (!user) {
+			user = await prisma.informacionUsuario.findFirst({
+				where: {
+					telefonoPersonal: telefonoPersonal,
+				}
+			});
+		}
+
+		// Si no se encuentra el usuario, lanzar un error
+		if (!user) {
+			throw new Error("No se encontró ningún usuario con los datos proporcionados.");
+		}
+		else {
+			console.log("Usuario encontrado:", user);
+		}
+
+		// Comparar y agregar a updatedData solo los campos que han cambiado
+		if (user.nombre !== nombre) {
+			const updatedUser = await prisma.informacionUsuario.update({ where: { idUsuario: user.idUsuario }, data: { nombre: nombre } });
+			return updatedUser;
+		}
+		if (user.apellido !== apellido) {
+			const updatedUser = await prisma.informacionUsuario.update({ where: { idUsuario: user.idUsuario }, data: { apellido: apellido } });
+			return updatedUser;
+		}
+		if (user.correo !== correo) {
+			const updatedUser = await prisma.informacionUsuario.update({ where: { idUsuario: user.idUsuario }, data: { correo: correo } });
+			return updatedUser;
+		}
+		if (user.tipoDocumento !== tipoDocumento) {
+			const updatedUser = await prisma.informacionUsuario.update({ where: { idUsuario: user.idUsuario }, data: { tipoDocumento: tipoDocumento } });
+			return updatedUser;
+		}
+		if (user.documento !== documento) {
+			const updatedUser = await prisma.informacionUsuario.update({ where: { idUsuario: user.idUsuario }, data: { documento: documento } });
+			return updatedUser;
+		}
+		if (user.telefonoPersonal !== telefonoPersonal) {
+			const updatedUser = await prisma.informacionUsuario.update({ where: { idUsuario: user.idUsuario }, data: { telefonoPersonal: telefonoPersonal } });
+			return updatedUser;
+		}
+
+	} catch (error) {
+		console.error("Error al editar el usuario:", error);
+		throw new Error("Hubo un problema al editar el usuario.");
+	}
+};
+
 
 //---------------------------------------------------------------------------------------------------------
 
-export const editWebPracticante = async (nombre, documento, tipoDocumento, genero, estrato, barrio, localidad ) => {
+export const editWebPracticante = async (nombre, documento, tipoDocumento, genero, estrato, barrio, localidad) => {
 
 	try {
 		const pract = await prisma.practicante.update({
@@ -541,7 +592,7 @@ export const getWebCitas = async (diaActual) => {
 	} catch (error) {
 		console.error('Error al obtener las citas:', error)
 		throw new Error('Hubo un problema al obtener las citas.')
-	}	
+	}
 
 }
 
@@ -561,6 +612,6 @@ export const citasPorPaciente = async (idPaciente) => {
 	} catch (error) {
 		console.error('Error al obtener las citas:', error)
 		throw new Error('Hubo un problema al obtener las citas.')
-	}	
+	}
 
 }

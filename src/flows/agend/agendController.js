@@ -1,5 +1,5 @@
+import { prisma } from '../../queries/queries.js'
 import { apiHorarios } from './aiHorarios.js'
-import { prisma, obtenerUsuario } from '../../queries/queries.js'
 
 // Consultar cita existente
 async function consultarCita(idUsuario) {
@@ -365,13 +365,9 @@ async function encontrarConsultorioDisponible(horario) {
 
 export { consultarCita, controladorAgendamiento, confirmarCita, modificarCita, eliminarCita }
 
-// // // Pruebas
-// // try {
-// // 	const usuario = await obtenerUsuario('573169199260')
-// // 	console.log('Usuario obtenido: \n', usuario)
 // // Pruebas
 // try {
-// 	const usuario = await obtenerUsuario('1234567890')
+// 	const usuario = await obtenerUsuario('573169199260')
 // 	console.log('Usuario obtenido: \n', usuario)
 
 // 	const pruebaControladorAgendamiento = await controladorAgendamiento(usuario)
@@ -389,28 +385,14 @@ export { consultarCita, controladorAgendamiento, confirmarCita, modificarCita, e
 // 		)
 // 		console.log('Prueba confirmar cita:  \n', pruebaConfirmarCita)
 
-// // 		if (pruebaConfirmarCita && pruebaConfirmarCita.cita) {
-// // 			console.log(pruebaConfirmarCita)
-// // 			const pruebaModificarCita = await modificarCita(
-// // 				pruebaConfirmarCita.cita.idCita,
-// // 				pruebaControladorAgendamiento.horarios[1]
-// // 			)
-// // 			console.log('Prueba modificar cita:  \n', pruebaModificarCita)
 // 		if (pruebaConfirmarCita && pruebaConfirmarCita.cita) {
+// 			console.log(pruebaConfirmarCita)
 // 			const pruebaModificarCita = await modificarCita(
 // 				pruebaConfirmarCita.cita.idCita,
 // 				pruebaControladorAgendamiento.horarios[1]
 // 			)
 // 			console.log('Prueba modificar cita:  \n', pruebaModificarCita)
 
-// // 			// const pruebaEliminarCita = await eliminarCita(pruebaConfirmarCita.cita.idCita)
-// // 			// console.log('Prueba eliminar cita:  \n', pruebaEliminarCita)
-// // 		} else {
-// // 			console.error('Error: No se pudo confirmar la cita.')
-// // 		}
-// // 	} else {
-// // 		console.error('Error: No se encontraron horarios o practicantes disponibles.')
-// // 	}
 // 			// const pruebaEliminarCita = await eliminarCita(pruebaConfirmarCita.cita.idCita)
 // 			// console.log('Prueba eliminar cita:  \n', pruebaEliminarCita)
 // 		} else {

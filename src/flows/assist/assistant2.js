@@ -119,13 +119,13 @@ export async function apiAssistant2(numero, msg, id) {
 	}
 }
 
-console.log(
-	await apiAssistant2(
-		'573022949109',
-		'Quiero reagendar la cita para el viernes a las 10',
-		'c691cb35-f1b6-4fd9-8fe4-46aab62a52e4'
-	)
-)
+// console.log(
+// 	await apiAssistant2(
+// 		'573022949109',
+// 		'Quiero reagendar la cita para el viernes a las 10',
+// 		'c691cb35-f1b6-4fd9-8fe4-46aab62a52e4'
+// 	)
+// )
 // async function main() {
 // 	const messages = [{ role: 'user', content: "What's the weather like in Boston today?" }]
 // 	const tools = [
