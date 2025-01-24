@@ -1,4 +1,5 @@
 import { prisma } from '../../queries/queries.js'
+// import { obtenerUsuario } from '../../queries/queries.js'
 
 // Consultar cita existente
 async function consultarCita(idUsuario) {
@@ -369,8 +370,8 @@ export { consultarCita, controladorAgendamiento, confirmarCita, modificarCita, e
 // 			)
 // 			console.log('Prueba modificar cita:  \n', pruebaModificarCita)
 
-// 			const pruebaEliminarCita = await eliminarCita(pruebaConfirmarCita.cita.idCita)
-// 			console.log('Prueba eliminar cita:  \n', pruebaEliminarCita)
+// 			// const pruebaEliminarCita = await eliminarCita(pruebaConfirmarCita.cita.idCita)
+// 			// console.log('Prueba eliminar cita:  \n', pruebaEliminarCita)
 // 		} else {
 // 			console.error('Error: No se pudo confirmar la cita.')
 // 		}

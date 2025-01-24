@@ -1,7 +1,13 @@
 //---------------------------------------------------------------------------------------------------------
 
 import { addKeyword, utils, EVENTS } from '@builderbot/bot'
-import { obtenerUsuario, changeTest, getInfoCuestionario, switchFlujo } from '../queries/queries.js'
+import {
+	obtenerUsuario,
+	changeTest,
+	getInfoCuestionario,
+	switchFlujo,
+	switchAyudaPsicologica,
+} from '../queries/queries.js'
 import { apiRegister } from './register/aiRegister.js'
 import { apiAssistant1 } from './assist/Aiassistant.js'
 import { apiAssistant2 } from './assist/assistant2.js'
@@ -47,21 +53,16 @@ export const registerFlow = addKeyword(utils.setEvent('REGISTER_FLOW')).addActio
 export const assistantFlow = addKeyword(utils.setEvent('ASSISTANT_FLOW')).addAction(
 	async (ctx, { flowDynamic, gotoFlow, state }) => {
 		const user = state.get('user')
-		if (!user.ayudaPsicologica) {
-			const ass2 = await apiAssistant2(ctx.from, ctx.body, user.idUsuario)
-			if (ass2 == true) {
-				return gotoFlow(testFlow)
-			} else {
-				await flowDynamic(ass2)
-			}
+
+		if (user.ayudaPsicologica == 2) {
+			await switchFlujo(user.telefonoPersonal, 'testFlow')
+			return gotoFlow(testFlow)
+		} else if (user.ayudaPsicologica == 0) {
+			const assist = await apiAssistant2(ctx.from, ctx.body, user.idUsuario)
+			await flowDynamic(assist)
 		} else {
-			if (user.ayudaPsicologica == 2) {
-				await switchFlujo(user.telefonoPersonal, 'testFlow')
-				return gotoFlow(testFlow)
-			} else {
-				const assist = await apiAssistant1(ctx.from, ctx.body)
-				await flowDynamic(assist)
-			}
+			const assist = await apiAssistant1(ctx.from, ctx.body)
+			await flowDynamic(assist)
 		}
 	}
 )
@@ -121,9 +122,16 @@ export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 //---------------------------------------------------------------------------------------------------------
 
 export const agendFlow = addKeyword(utils.setEvent('AGEND_FLOW')).addAction(
-	async (ctx, { flowDynamic, state }) => {
+	async (ctx, { flowDynamic, state, gotoFlow }) => {
 		const user = state.get('user')
-		await flowDynamic(await apiAgend(ctx.from, ctx.body, user))
+		const msgAgend = await apiAgend(ctx.from, ctx.body, user)
+		if (msgAgend.includes('Se ha registrado su cita para el día')) {
+			await switchAyudaPsicologica(ctx.from, 0)
+			user.ayudaPsicologica = 0
+			await state.update({ user: user })
+			await switchFlujo(ctx.from, 'assistantFlow')
+			return gotoFlow(assistantFlow)
+		} else await flowDynamic(msgAgend)
 	}
 )
 

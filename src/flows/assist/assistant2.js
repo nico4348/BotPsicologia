@@ -1,50 +1,46 @@
 import OpenAI from 'openai'
 import { consultarCita, modificarCita, eliminarCita } from '../agend/agendController.js'
-import { obtenerHist, saveHist, switchAyudaPsicologica } from '../../queries/queries.js'
+import { obtenerHist, saveHist, getCita } from '../../queries/queries.js'
 import { assistantPrompt } from '../../openAi/prompts.js'
-import { apiBack } from '../../openAi/aiBack.js'
-
-//---------------------------------------------------------------------------------------------------------
 
 const aiRegister = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 })
 
-//---------------------------------------------------------------------------------------------------------
-
-async function cambiarEstado(num, hist) {
-	const opcion = parseInt(
-		await apiBack(
-			hist,
-			`Devuelve "1" si el usuario no quiere ayuda. De lo contrario, si el usuario SI quiere ayuda devuelve "2"
-			IMPORTANTE: SOLO DEVOLVERAS EL NUMERO`
-		)
-	)
-	await switchAyudaPsicologica(num, opcion)
-	return {
-		success: true,
-		result: opcion,
-		message: 'Estado del usuario cambiado',
-	}
-}
-
-//---------------------------------------------------------------------------------------------------------
-
-// Definición de herramientas
 const tools = [
 	{
 		type: 'function',
 		function: {
-			name: 'cambiarEstado',
-			description: `
-            IMPORTANTE: Esta función SOLO debe ser llamada cuando:
-            1. El usuario esté interesado en recibir ayuda Psicologia
-			2. Si el usuario menciona que quiere una cita de Psicologia
-            
-            NO llamar esta función:
-            - Si el usuario solo está conversando normalmente
-            - Si el usuario menciona temas de psicología pero no en respuesta a un ofrecimiento de ayuda
-            `,
+			name: 'consultarCita',
+			description: 'Retrieve details of a specific appointment',
+			parameters: {
+				type: 'object',
+				properties: {},
+			},
+		},
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'reAgendarCita',
+			description: 'Reschedule an existing appointment',
+			parameters: {
+				type: 'object',
+				properties: {
+					nuevoHorario: {
+						type: 'string',
+						description: 'New date and time for the appointment',
+					},
+				},
+				required: ['nuevoHorario'],
+			},
+		},
+	},
+	{
+		type: 'function',
+		function: {
+			name: 'cancelarCita',
+			description: 'Cancel an existing appointment',
 			parameters: {
 				type: 'object',
 				properties: {},
@@ -52,8 +48,6 @@ const tools = [
 		},
 	},
 ]
-
-//---------------------------------------------------------------------------------------------------------
 
 export async function apiAssistant2(numero, msg, id) {
 	const conversationHistory = await obtenerHist(numero)
@@ -69,47 +63,61 @@ export async function apiAssistant2(numero, msg, id) {
 			model: 'gpt-4o-mini',
 			messages: conversationHistory,
 			tools: tools,
-			tool_choice: 'auto', //* Importante usar tool choice
+			tool_choice: 'auto',
 		})
 
-		const assistantMessage = response.choices[0].message.content
-		const toolCalls = response.choices[0].message.tool_calls
+		const assistantMessage = response.choices[0].message
+		const toolCalls = assistantMessage.tool_calls
 
 		if (toolCalls && toolCalls.length > 0) {
+			const toolCallResponses = []
+
 			for (const call of toolCalls) {
 				if (call.type === 'function') {
+					const functionArgs = JSON.parse(call.function.arguments)
+					let functionResult
+
 					switch (call.function.name) {
 						case 'consultarCita':
-							await consultarCita(id)
-							cambiarEstado()
-							console.log('consultarCita')
-							return true
-
-						case 'reAgendarCita':
-							await modificarCita()
-							console.log('reAgendarCita')
-							return true
-
-						case 'cancelarCita':
-							await eliminarCita()
-							console.log('cancelarCita')
-							return true
-
-						default:
+							functionResult = await consultarCita(id)
 							break
+						case 'reAgendarCita':
+							functionResult = await modificarCita(id, functionArgs.nuevoHorario)
+							break
+						case 'cancelarCita': {
+							const cita = await getCita(id)
+							functionResult = await eliminarCita(cita.id)
+							break
+						}
 					}
+
+					toolCallResponses.push({
+						tool_call_id: call.id,
+						role: 'tool',
+						name: call.function.name,
+						content: JSON.stringify(functionResult),
+					})
 				}
 			}
+
+			conversationHistory.push(...toolCallResponses)
+
+			const finalResponse = await aiRegister.chat.completions.create({
+				model: 'gpt-4o-mini',
+				messages: conversationHistory,
+				tools: tools,
+				tool_choice: 'auto',
+			})
+
+			return finalResponse.choices[0].message.content
 		} else {
-			conversationHistory.push({ role: 'assistant', content: assistantMessage })
+			conversationHistory.push({ role: 'assistant', content: assistantMessage.content })
 			conversationHistory.shift()
 			await saveHist(numero, conversationHistory)
-			return assistantMessage
+			return assistantMessage.content
 		}
 	} catch (error) {
-		console.error('Error al obtener la respuesta de OpenAI:', error)
-		throw new Error('Hubo un error al procesar la solicitud.')
+		console.error('Error processing OpenAI request:', error)
+		throw new Error('Failed to process the request.')
 	}
 }
-
-// console.log(await consultarCita('d047ec73-a4f2-425e-a3ee-4962094bace2'))
