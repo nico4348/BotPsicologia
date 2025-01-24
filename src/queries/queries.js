@@ -349,3 +349,201 @@ export const getPracticante = async (documento) => {
 }
 
 //---------------------------------------------------------------------------------------------------------
+
+export const addWebUser = async (nombre, apellido, correo, tipoDocumento, documento, telefonoPersonal) => {
+
+	try {
+		const user = await prisma.informacionUsuario.create({
+			data: {
+				nombre: nombre,
+				apellido: apellido,
+				correo: correo,
+				tipoDocumento: tipoDocumento,
+				documento: documento,
+				telefonoPersonal: telefonoPersonal,
+			},
+		})
+		return user
+	} catch (error) {
+		console.error('Error al crear el usuario:', error)
+		throw new Error('Hubo un problema al crear el usuario.')
+	}
+
+}
+
+//---------------------------------------------------------------------------------------------------------
+
+export const addWebPracticante = async (nombre, documento, tipoDocumento, genero, estrato, barrio, localidad, horario ) => {
+
+	try {
+		const pract = await prisma.practicante.create({
+			data: {
+				nombre: nombre,
+				numero_documento: documento,
+				tipo_documento: tipoDocumento,
+				genero: genero,
+				estrato: estrato,
+				barrio: barrio,
+				localidad: localidad,
+				horario: horario,
+			},
+		})
+		return pract
+	} catch (error) {
+		console.error('Error al crear el practicante:', error)
+		throw new Error('Hubo un problema al crear el practicante.')
+	}
+
+}
+
+//---------------------------------------------------------------------------------------------------------
+
+export const editWebUser = async (nombre, apellido, correo, tipoDocumento, documento, telefonoPersonal) => {
+
+	try {
+		const user = await prisma.informacionUsuario.update({
+			where: {
+				OR: [
+					{ telefonoPersonal: telefonoPersonal },
+					{ documento: documento },
+					{ correo: correo }
+				]
+			},
+			data: {
+				nombre: nombre,
+				apellido: apellido,
+				correo: correo,
+				tipoDocumento: tipoDocumento,
+				documento: documento,
+			},
+		})
+		return user
+	} catch (error) {
+		console.error('Error al editar el usuario:', error)
+		throw new Error('Hubo un problema al editar el usuario.')
+	}
+
+}
+
+//---------------------------------------------------------------------------------------------------------
+
+export const editWebPracticante = async (nombre, documento, tipoDocumento, genero, estrato, barrio, localidad ) => {
+
+	try {
+		const pract = await prisma.practicante.update({
+			where: {
+				numero_documento: documento,
+			},
+			data: {
+				nombre: nombre,
+				tipo_documento: tipoDocumento,
+				genero: genero,
+				estrato: estrato,
+				barrio: barrio,
+				localidad: localidad,
+			},
+		})
+		return pract
+	} catch (error) {
+		console.error('Error al editar el practicante:', error)
+		throw new Error('Hubo un problema al editar el practicante.')
+	}
+
+}
+
+//---------------------------------------------------------------------------------------------------------
+
+export const citaWebCheckout = async (idCita) => {
+
+	try {
+		const cita = await prisma.cita.update({
+			where: {
+				idCita: idCita,
+			},
+			data: {
+				estado: "completada",
+			},
+		})
+		return cita
+	} catch (error) {
+		console.error('Error al cambiar estado de la cita:', error)
+		throw new Error('Hubo un problema al crear la cita.')
+	}
+
+}
+
+//---------------------------------------------------------------------------------------------------------
+
+export const getWebConsultorios = async () => {
+
+	try {
+		const consultorios = await prisma.consultorio.findMany()
+		return consultorios
+	} catch (error) {
+		console.error('Error al obtener los consultorios:', error)
+		throw new Error('Hubo un problema al obtener los consultorios.')
+	}
+
+}
+
+//---------------------------------------------------------------------------------------------------------
+
+export const ChangeWebConsultorio = async (idConsultorio) => {
+
+	try {
+		const consultorio = await prisma.consultorio.update({
+			where: {
+				idConsultorio: idConsultorio,
+			},
+			data: {
+				activo: 0,
+			},
+		})
+		return consultorio
+	} catch (error) {
+		console.error('Error al cambiar estado del consultorio:', error)
+		throw new Error('Hubo un problema al cambiar estado del consultorio.')
+	}
+
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+
+export const getWebCitas = async (diaActual) => {
+
+	try {
+		const citas = await prisma.cita.findMany({
+
+			where: {
+				fechaHora: diaActual,
+			},
+
+		})
+		return citas
+	} catch (error) {
+		console.error('Error al obtener las citas:', error)
+		throw new Error('Hubo un problema al obtener las citas.')
+	}	
+
+}
+
+//---------------------------------------------------------------------------------------------------------
+
+export const citasPorPaciente = async (idPaciente) => {
+
+	try {
+		const citas = await prisma.cita.findMany({
+
+			where: {
+				idPaciente: idPaciente,
+			},
+
+		})
+		return citas
+	} catch (error) {
+		console.error('Error al obtener las citas:', error)
+		throw new Error('Hubo un problema al obtener las citas.')
+	}	
+
+}

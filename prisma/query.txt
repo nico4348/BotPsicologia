@@ -28,3 +28,33 @@ INSERT INTO practicante (idPracticante, numero_documento, tipo_documento, nombre
     'lun', JSON_ARRAY('15:00', '16:00', '17:00', '18:00'),
     'jue', JSON_ARRAY('15:00', '16:00', '17:00', '18:00')
   ), 0);
+
+INSERT INTO informacionUsuario (
+    idUsuario, 
+    nombre, 
+    apellido, 
+    correo, 
+    telefonoPersonal, 
+    documento, 
+    tipoDocumento, 
+    testActual, 
+    motivo, 
+    ayudaPsicologica, 
+    tratDatos, 
+    historial, 
+    flujo, 
+    sesion, 
+    estado, 
+    practicanteAsignado, 
+    disponibilidad
+) VALUES
+-- Registro 1
+(uuid(), 'Juan', 'Pérez', 'juan.perez@example.com', '1234567890', '12345678', 'CC', 'ghq12', 'Consulta inicial', 1, false, '{}', 'register', 0, true, null, '{}'),
+-- Registro 2
+(uuid(), 'María', 'Gómez', 'maria.gomez@example.com', '0987654321', '87654321', 'CC', 'ghq12', 'Orientación vocacional', 1, true, null, 'register', 0, true, 'practicante1', '{}'),
+-- Registro 3
+(uuid(), 'Carlos', 'López', 'carlos.lopez@example.com', '1122334455', '11223344', 'TI', 'ghq12', 'Problemas emocionales', 2, true, null, 'register', 0, true, 'practicante2', '{}'),
+-- Registro 4
+(uuid(), 'Ana', 'Martínez', 'ana.martinez@example.com', '2233445566', '22334455', 'CE', 'ghq12', 'Seguimiento', 1, false, '{}', 'register', 1, true, null, '{}'),
+-- Registro 5
+(uuid(), 'Luis', 'Hernández', 'luis.hernandez@example.com', '3344556677', '33445566', 'CC', 'ghq12', 'Evaluación psicológica', 1, true, '{}', 'register', 2, true, 'practicante3', '{}');
