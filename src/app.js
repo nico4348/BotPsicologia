@@ -2,6 +2,7 @@ import { createBot, createProvider, createFlow } from '@builderbot/bot'
 import { MysqlAdapter as Database } from '@builderbot/database-mysql'
 import { BaileysProvider as Provider } from '@builderbot/provider-baileys'
 import { welcomeFlow, registerFlow, assistantFlow, testFlow, agendFlow } from './flows/flows.js'
+import { getPracticante, getUsuario } from './queries/queries.js'
 
 const PORT = process.env.PORT ?? 3008
 
@@ -62,6 +63,52 @@ const main = async () => {
 
 			res.writeHead(200, { 'Content-Type': 'application/json' })
 			return res.end(JSON.stringify({ status: 'ok', number, intent }))
+		})
+	)
+
+	//---------------------------------------------------------------------------------------------------------
+
+	adapterProvider.server.get(
+		'/v1/front/:entity/:searchQuery',
+		handleCtx(async (bot, req, res) => {
+			const { entity, searchQuery } = req.params // Extrae los parámetros correctamente
+
+			try {
+				let response
+				console.log(entity)
+				switch (entity) {
+					case 'user':
+						response = await getUsuario(searchQuery) // Lógica para obtener el usuario
+						break
+
+					case 'practicante':
+						response = await getPracticante(searchQuery) // Lógica para obtener el practicante
+						break
+
+					default:
+						// Si la entidad no es válida, devuelve un error
+						res.writeHead(400, { 'Content-Type': 'application/json' })
+						return res.end(
+							JSON.stringify({
+								status: 'error',
+								message: 'Entidad no válida',
+							})
+						)
+				}
+
+				res.writeHead(200, { 'Content-Type': 'application/json' })
+				return res.end(JSON.stringify(response))
+			} catch (error) {
+				// Manejo de errores
+				console.error(error)
+				res.writeHead(500, { 'Content-Type': 'application/json' })
+				return res.end(
+					JSON.stringify({
+						status: 'error',
+						message: 'Error al consultar la base de datos',
+					})
+				)
+			}
 		})
 	)
 

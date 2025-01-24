@@ -13,6 +13,8 @@ CREATE TABLE `informacionUsuario` (
     `tratDatos` BOOLEAN NOT NULL DEFAULT false,
     `historial` JSON NULL,
     `flujo` VARCHAR(191) NOT NULL DEFAULT 'register',
+    `sesion` INTEGER NOT NULL DEFAULT 0,
+    `estado` BOOLEAN NOT NULL DEFAULT true,
     `practicanteAsignado` VARCHAR(191) NULL,
     `disponibilidad` JSON NOT NULL,
 
@@ -73,6 +75,7 @@ CREATE TABLE `practicante` (
     `barrio` VARCHAR(191) NOT NULL,
     `localidad` VARCHAR(191) NOT NULL,
     `horario` JSON NOT NULL,
+    `sesiones` INTEGER NOT NULL DEFAULT 0,
 
     UNIQUE INDEX `practicante_idPracticante_key`(`idPracticante`),
     UNIQUE INDEX `practicante_numero_documento_key`(`numero_documento`),
@@ -86,6 +89,7 @@ CREATE TABLE `cita` (
     `idUsuario` VARCHAR(191) NOT NULL,
     `idPracticante` VARCHAR(191) NOT NULL,
     `fechaHora` VARCHAR(191) NOT NULL,
+    `estado` VARCHAR(191) NOT NULL DEFAULT 'pendiente',
 
     UNIQUE INDEX `cita_idCita_key`(`idCita`),
     PRIMARY KEY (`idCita`)

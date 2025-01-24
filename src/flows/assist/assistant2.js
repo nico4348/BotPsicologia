@@ -1,5 +1,5 @@
 import OpenAI from 'openai'
-import axios from 'axios'
+import { consultarCita, modificarCita, eliminarCita } from '../agend/agendController.js'
 import { obtenerHist, saveHist, switchAyudaPsicologica } from '../../queries/queries.js'
 import { assistantPrompt } from '../../openAi/prompts.js'
 import { apiBack } from '../../openAi/aiBack.js'
@@ -55,24 +55,12 @@ const tools = [
 
 //---------------------------------------------------------------------------------------------------------
 
-export async function apiAssistant1(numero, msg) {
+export async function apiAssistant2(numero, msg, id) {
 	const conversationHistory = await obtenerHist(numero)
 	conversationHistory.unshift({
 		role: 'system',
 		content: assistantPrompt,
 	})
-	if (Math.floor(Math.random() * 10) <= 7) {
-		let c = 0
-		c = c + 1
-		console.log('Numero aleatorio')
-		if (c >= 3) {
-			conversationHistory.push({
-				role: 'system',
-				content: `\nIMPORTANTE:\nDEBES preguntar al usuario si quiere recibir ayuda psicológica. 
-					para saber como cambiar el estado del usuario `,
-			})
-		}
-	}
 
 	conversationHistory.push({ role: 'user', content: msg })
 
@@ -91,30 +79,21 @@ export async function apiAssistant1(numero, msg) {
 			for (const call of toolCalls) {
 				if (call.type === 'function') {
 					switch (call.function.name) {
-						case 'cambiarEstado':
-							await cambiarEstado(numero, conversationHistory)
-							await axios.post('http://localhost:3000/v1/messages', {
-								number: numero,
-								message:
-									'Con el fin de brindarte la mejor atención posible, te invitamos a realizar estas dos sencillos Tests. Tu colaboración es muy importante para nosotros. ¿Empezamos?',
-							})
-							return true
-
 						case 'consultarCita':
-							cambiarEstado(1, 1)
+							await consultarCita(id)
+							cambiarEstado()
+							console.log('consultarCita')
 							return true
 
 						case 'reAgendarCita':
-							cambiarEstado(1, 1)
+							await modificarCita()
+							console.log('reAgendarCita')
 							return true
 
 						case 'cancelarCita':
-							cambiarEstado(1, 1)
+							await eliminarCita()
+							console.log('cancelarCita')
 							return true
-
-						// case 'cambiarEstado':
-						// 	cambiarEstado(1, 1)
-						// 	return true
 
 						default:
 							break
@@ -132,3 +111,5 @@ export async function apiAssistant1(numero, msg) {
 		throw new Error('Hubo un error al procesar la solicitud.')
 	}
 }
+
+// console.log(await consultarCita('d047ec73-a4f2-425e-a3ee-4962094bace2'))
