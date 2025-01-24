@@ -71,19 +71,19 @@ export async function apiAgend(numero, msg) {
 						const args = JSON.parse(toolCall.function.arguments)
 
 						if (args.disp) {
-							await saveDisp(args.disp, numero)
+							const cita = await saveDisp(args.disp, numero)
 
 							// Agregar el resultado de la función al historial
 							conversationHistory.push({
 								role: 'assistant',
-								content: `✅ Disponibilidad registrada`,
+								content: `Se ha registrado su cita para el día ${cita}`,
 							})
 
 							// Guardar el historial actualizado
 							conversationHistory.shift() // Remover el prompt del sistema
 							await saveHist(numero, conversationHistory)
 
-							return `✅ Disponibilidad registrada`
+							return `Se ha registrado su cita para el día ${cita}`
 						}
 					} catch (error) {
 						console.error('Error al procesar los argumentos de la función:', error)

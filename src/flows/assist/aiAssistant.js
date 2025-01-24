@@ -62,7 +62,7 @@ const tools = [
 ]
 
 //---------------------------------------------------------------------------------------------------------
-
+let c = 0
 export async function apiAssistant1(numero, msg) {
 	const conversationHistory = await obtenerHist(numero)
 	conversationHistory.unshift({
@@ -70,7 +70,6 @@ export async function apiAssistant1(numero, msg) {
 		content: assistantPrompt,
 	})
 	if (Math.floor(Math.random() * 10) <= 7) {
-		let c = 0
 		c = c + 1
 		console.log('Numero aleatorio')
 		if (c >= 3) {

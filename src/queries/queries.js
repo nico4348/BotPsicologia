@@ -350,6 +350,23 @@ export const getPracticante = async (documento) => {
 
 //---------------------------------------------------------------------------------------------------------
 
+//Necesito una query de prisma para obtener la cita en estado "pendiente" en base al id del usuario
+export const getCita = async (id) => {
+	try {
+		let cita = await prisma.citas.findFirst({
+			where: {
+				idUsuario: id,
+				estado: 'pendiente',
+			},
+		})
+
+		return cita
+	} catch (error) {
+		console.error('Error al obtener la Cita:', error)
+		throw new Error('Hubo un problema al obtener la Cita.')
+	}
+}
+
 export const addWebUser = async (nombre, apellido, correo, tipoDocumento, documento, telefonoPersonal) => {
 
 	try {
