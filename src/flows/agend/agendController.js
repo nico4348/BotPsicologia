@@ -1,5 +1,5 @@
 import { prisma } from '../../queries/queries.js'
-// import { obtenerUsuario } from '../../queries/queries.js'
+import { apiHorarios } from './aiHorarios.js'
 
 // Consultar cita existente
 async function consultarCita(idUsuario) {
@@ -134,6 +134,8 @@ async function confirmarCita(datosUsuario, idPracticante, horarioSeleccionado) {
 					practicanteAsignado: idPracticante,
 				},
 			})
+		} else {
+			idPracticante = datosUsuario.practicanteAsignado
 		}
 
 		const nuevaCita = await prisma.cita.create({
@@ -186,10 +188,29 @@ async function confirmarCita(datosUsuario, idPracticante, horarioSeleccionado) {
 }
 
 // Modificar cita existente
-async function modificarCita(idCita, nuevoHorario) {
+async function modificarCita(idUsuario, horario) {
 	try {
+		let idCita = await prisma.cita.findFirst({
+			where: { idUsuario },
+			select: { idCita: true },
+		})
+
+		idCita = idCita.idCita
+
+		if (!idCita) {
+			throw new Error('No se encontró ninguna cita para este usuario')
+		}
+		console.log(idCita)
+		console.log(horario)
+		const nuevoHorario0 = await apiHorarios(horario)
+		const nuevoHorario = Object.entries(nuevoHorario0)
+			.map(([dia, horas]) => {
+				return horas.map((hora) => ({ dia, hora }))
+			})
+			.flat()[0] // Toma solo el primer elemento del arreglo
+		console.log(nuevoHorario)
 		const citaActual = await prisma.cita.findUnique({
-			where: { idCita },
+			where: { idCita: idCita },
 			include: {
 				practicante: true,
 			},
@@ -199,6 +220,7 @@ async function modificarCita(idCita, nuevoHorario) {
 			throw new Error('Cita no encontrada')
 		}
 
+		console.log(citaActual)
 		const horarioPracticante = citaActual.practicante.horario
 		if (!horarioPracticante[nuevoHorario.dia]?.includes(nuevoHorario.hora)) {
 			throw new Error('El practicante no está disponible en este horario')
@@ -345,7 +367,7 @@ export { consultarCita, controladorAgendamiento, confirmarCita, modificarCita, e
 
 // // Pruebas
 // try {
-// 	const usuario = await obtenerUsuario('573022949109')
+// 	const usuario = await obtenerUsuario('573169199260')
 // 	console.log('Usuario obtenido: \n', usuario)
 
 // 	const pruebaControladorAgendamiento = await controladorAgendamiento(usuario)
@@ -364,6 +386,7 @@ export { consultarCita, controladorAgendamiento, confirmarCita, modificarCita, e
 // 		console.log('Prueba confirmar cita:  \n', pruebaConfirmarCita)
 
 // 		if (pruebaConfirmarCita && pruebaConfirmarCita.cita) {
+// 			console.log(pruebaConfirmarCita)
 // 			const pruebaModificarCita = await modificarCita(
 // 				pruebaConfirmarCita.cita.idCita,
 // 				pruebaControladorAgendamiento.horarios[1]

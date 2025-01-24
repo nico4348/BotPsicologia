@@ -9,7 +9,7 @@ import {
 	switchAyudaPsicologica,
 } from '../queries/queries.js'
 import { apiRegister } from './register/aiRegister.js'
-import { apiAssistant1 } from './assist/Aiassistant.js'
+import { apiAssistant1 } from './assist/aiAssistant.js'
 import { apiAssistant2 } from './assist/assistant2.js'
 import { procesarMensaje } from './tests/proccesTest.js'
 import { apiBack1 } from '../openAi/aiBack.js'
