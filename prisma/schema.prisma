@@ -9,21 +9,22 @@ datasource db {
 
 //Creacion usuario:-----------------------------------------------------------------------------------------------------------------------------------------------------
 model informacionUsuario {
-  idUsuario        String  @id @unique @default(uuid())
+  idUsuario        String   @id @unique @default(uuid())
   nombre           String?
   apellido         String?
-  correo           String? @unique
-  telefonoPersonal String  @unique
-  documento        String? @unique
-  tipoDocumento    String  @default("CC")
-  testActual       String  @default("ghq12")
+  correo           String?  @unique
+  telefonoPersonal String   @unique
+  documento        String?  @unique
+  tipoDocumento    String   @default("CC")
+  testActual       String   @default("ghq12")
   motivo           String?
-  ayudaPsicologica Int     @default(1)
-  tratDatos        Boolean @default(false)
+  ayudaPsicologica Int      @default(1)
+  tratDatos        Boolean  @default(false)
   historial        Json?
-  flujo            String  @default("register")
-  sesion           Int     @default(0)
-  estado           Boolean @default(true)
+  flujo            String   @default("register")
+  sesion           Int      @default(0)
+  estado           Boolean  @default(true)
+  fechaCreacion    DateTime @default(now())
 
   practicanteAsignado String? // ID del practicante asignado permanentemente
 
@@ -67,35 +68,38 @@ model tests {
 //Agendamientos:
 
 model consultorio {
-  idConsultorio String  @id @unique @default(uuid())
+  idConsultorio String   @id @unique @default(uuid())
   nombre        String
-  activo        Boolean @default(true)
+  activo        Boolean  @default(true)
+  fechaCreacion DateTime @default(now())
 
   citas cita[] // Relación con cita
 }
 
 model practicante {
-  idPracticante    String @id @unique @default(uuid())
-  numero_documento String @unique
-  tipo_documento   String @default("CC")
+  idPracticante    String   @id @unique @default(uuid())
+  numero_documento String   @unique
+  tipo_documento   String   @default("CC")
   nombre           String
   genero           String
   estrato          String
   barrio           String
   localidad        String
   horario          Json
-  sesiones         Int    @default(0)
+  sesiones         Int      @default(0)
+  fechaCreacion    DateTime @default(now())
 
   citas cita[] // Relación con cita
 }
 
 model cita {
-  idCita        String @id @unique @default(uuid())
+  idCita        String   @id @unique @default(uuid())
   idConsultorio String
   idUsuario     String
   idPracticante String
-  fechaHora     String
-  estado        String @default("pendiente")
+  fechaHora     DateTime
+  estado        String   @default("pendiente")
+  fechaCreacion DateTime @default(now())
 
   consultorio consultorio        @relation(fields: [idConsultorio], references: [idConsultorio]) // Relación con consultorio
   usuario     informacionUsuario @relation(fields: [idUsuario], references: [idUsuario]) // Relación con informacionUsuario

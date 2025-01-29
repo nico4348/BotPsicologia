@@ -2,7 +2,7 @@ import { prisma } from '../../queries/queries.js'
 import { apiHorarios } from './aiHorarios.js'
 
 // Consultar cita existente
-async function consultarCita(idUsuario) {
+export async function consultarCita(idUsuario) {
 	try {
 		const cita = await prisma.cita.findFirst({
 			where: { idUsuario },
@@ -33,35 +33,39 @@ async function consultarCita(idUsuario) {
 }
 
 // Buscar horarios disponibles y practicante
-async function controladorAgendamiento(datosUsuario) {
+// Controlador para gestionar el agendamiento de citas
+export async function controladorAgendamiento(datosUsuario) {
 	try {
 		const horarioUsuario = datosUsuario.disponibilidad
 		let practicanteSeleccionado
 		let horariosCoincidentes = []
 
+		// Caso 1: Usuario ya tiene un practicante asignado
 		if (datosUsuario.practicanteAsignado) {
+			// 1. Buscar el practicante en la base de datos
 			practicanteSeleccionado = await prisma.practicante.findUnique({
 				where: { idPracticante: datosUsuario.practicanteAsignado },
 			})
 
+			// 1.1 Validar si existe el practicante
 			if (!practicanteSeleccionado) {
 				throw new Error('Practicante asignado no encontrado')
 			}
 
+			// 2. Encontrar coincidencias de horarios entre usuario y practicante
 			horariosCoincidentes = encontrarHorariosCoincidentes(
 				horarioUsuario,
 				practicanteSeleccionado.horario
 			)
+			console.log(horariosCoincidentes)
 
-			if (horariosCoincidentes.length === 0) {
-				throw new Error('No hay horarios disponibles con el practicante asignado')
-			}
-
+			// 3. Verificar disponibilidad real en consultorios físicos
 			horariosCoincidentes = await verificarDisponibilidadConsultorios(
 				horariosCoincidentes,
 				practicanteSeleccionado.idPracticante
 			)
 
+			// 4. Retornar máximo 5 horarios con datos del practicante
 			return {
 				success: true,
 				horarios: horariosCoincidentes.slice(0, 5),
@@ -70,22 +74,33 @@ async function controladorAgendamiento(datosUsuario) {
 					nombre: practicanteSeleccionado.nombre,
 				},
 			}
-		} else {
+		}
+		// Caso 2: Usuario sin practicante asignado (primera cita)
+		else {
+			// 1. Obtener todos los practicantes disponibles
 			const practicantes = await prisma.practicante.findMany()
 			const practicantesDisponibles = []
 
+			//Organizar los practicantes de menor numero de sesiones (practicantes.sesiones) a mayor numero de sesiones
+			practicantes.sort((a, b) => a.sesiones - b.sesiones)
+
+			// 2. Evaluar cada practicante
 			for (const practicante of practicantes) {
+				// 2.1 Buscar coincidencias de horarios
 				const coincidencias = encontrarHorariosCoincidentes(
 					horarioUsuario,
 					practicante.horario
 				)
 
+				//! AQUI ME QUEDE.
 				if (coincidencias.length > 0) {
+					// 2.2 Verificar disponibilidad en consultorios
 					const horariosVerificados = await verificarDisponibilidadConsultorios(
 						coincidencias,
 						practicante.idPracticante
 					)
 
+					// 2.3 Almacenar practicante si tiene disponibilidad
 					if (horariosVerificados.length > 0) {
 						practicantesDisponibles.push({
 							practicante,
@@ -95,13 +110,16 @@ async function controladorAgendamiento(datosUsuario) {
 				}
 			}
 
+			// 3. Validar si hay practicantes disponibles
 			if (practicantesDisponibles.length === 0) {
 				throw new Error('No se encontró disponibilidad con ningún practicante')
 			}
 
+			// 4. Selección aleatoria de practicante disponible
 			const indiceAleatorio = Math.floor(Math.random() * practicantesDisponibles.length)
 			const seleccion = practicantesDisponibles[indiceAleatorio]
 
+			// 5. Retornar resultados para primera cita
 			return {
 				success: true,
 				horarios: seleccion.horarios.slice(0, 5),
@@ -109,17 +127,32 @@ async function controladorAgendamiento(datosUsuario) {
 					idPracticante: seleccion.practicante.idPracticante,
 					nombre: seleccion.practicante.nombre,
 				},
-				esPrimeraCita: true,
+				esPrimeraCita: true, // Bandera para identificar primera asignación
 			}
 		}
 	} catch (error) {
+		// Manejo centralizado de errores
 		console.error('Error al buscar horarios:', error)
+
+		// Relanzar error para manejo en capa superior
 		throw error
 	}
 }
 
+/*
+ * Funciones auxiliares (ejemplo de estructura):
+ *
+ * 1. encontrarHorariosCoincidentes(horarioUsuario, horarioPracticante):
+ *    - Compara dos arrays de horarios y devuelve las coincidencias
+ *    - Formato esperado: ["Lunes 09:00", "Martes 15:30", ...]
+ *
+ * 2. verificarDisponibilidadConsultorios(horarios, idPracticante):
+ *    - Consulta la base de datos para filtrar horarios ya ocupados
+ *    - Devuelve solo los horarios con consultorio disponible
+ */
+
 // Confirmar y crear nueva cita
-async function confirmarCita(datosUsuario, idPracticante, horarioSeleccionado) {
+export async function confirmarCita(datosUsuario, idPracticante, horarioSeleccionado) {
 	try {
 		const consultorioDisponible = await encontrarConsultorioDisponible(horarioSeleccionado)
 
@@ -188,7 +221,7 @@ async function confirmarCita(datosUsuario, idPracticante, horarioSeleccionado) {
 }
 
 // Modificar cita existente
-async function modificarCita(idUsuario, horario) {
+export async function modificarCita(idUsuario, horario) {
 	try {
 		let idCita = await prisma.cita.findFirst({
 			where: { idUsuario },
@@ -269,7 +302,7 @@ async function modificarCita(idUsuario, horario) {
 }
 
 // Eliminar cita
-async function eliminarCita(idCita) {
+export async function eliminarCita(idCita) {
 	try {
 		const cita = await prisma.cita.findUnique({
 			where: { idCita },
@@ -311,27 +344,16 @@ async function eliminarCita(idCita) {
 }
 
 // Funciones auxiliares
-function encontrarHorariosCoincidentes(horarioUsuario, horarioPracticante) {
-	const horariosCoincidentes = []
-	for (const dia in horarioUsuario) {
-		if (horarioPracticante[dia]) {
-			const horasCoincidentes = horarioUsuario[dia].filter((hora) =>
-				horarioPracticante[dia].includes(hora)
-			)
-			if (horasCoincidentes.length > 0) {
-				horasCoincidentes.forEach((hora) => {
-					horariosCoincidentes.push({
-						dia,
-						hora,
-					})
-				})
-			}
-		}
-	}
-	return horariosCoincidentes
+export function encontrarHorariosCoincidentes(usuario, practicante) {
+	return Object.keys(usuario).flatMap((dia) => {
+		const horasUsuario = new Set(usuario[dia])
+		return (practicante[dia] || [])
+			.filter((hora) => horasUsuario.has(hora))
+			.map((hora) => ({ dia, hora }))
+	})
 }
 
-async function verificarDisponibilidadConsultorios(horarios) {
+export async function verificarDisponibilidadConsultorios(horarios) {
 	const horariosDisponibles = []
 	for (const horario of horarios) {
 		const consultorioDisponible = await encontrarConsultorioDisponible(horario)
@@ -342,7 +364,7 @@ async function verificarDisponibilidadConsultorios(horarios) {
 	return horariosDisponibles
 }
 
-async function encontrarConsultorioDisponible(horario) {
+export async function encontrarConsultorioDisponible(horario) {
 	const consultorios = await prisma.consultorio.findMany({
 		where: { activo: true },
 	})
@@ -363,47 +385,47 @@ async function encontrarConsultorioDisponible(horario) {
 	return null
 }
 
-export { consultarCita, controladorAgendamiento, confirmarCita, modificarCita, eliminarCita }
+// Pruebas
 
-// // Pruebas
-// try {
-// 	const usuario = await obtenerUsuario('573169199260')
-// 	console.log('Usuario obtenido: \n', usuario)
+import { obtenerUsuario } from '../../queries/queries.js'
 
-// 	const pruebaControladorAgendamiento = await controladorAgendamiento(usuario)
-// 	console.log('Resultado de controladorAgendamiento:  \n', pruebaControladorAgendamiento)
+try {
+	const usuario = await obtenerUsuario('573022949109')
+	//console.log('Usuario obtenido: \n', usuario)
 
-// 	if (
-// 		pruebaControladorAgendamiento &&
-// 		pruebaControladorAgendamiento.practicante &&
-// 		pruebaControladorAgendamiento.horarios.length > 0
-// 	) {
-// 		const pruebaConfirmarCita = await confirmarCita(
-// 			usuario,
-// 			pruebaControladorAgendamiento.practicante.idPracticante,
-// 			pruebaControladorAgendamiento.horarios[0]
-// 		)
-// 		console.log('Prueba confirmar cita:  \n', pruebaConfirmarCita)
+	const pruebaControladorAgendamiento = await controladorAgendamiento(usuario)
+	//console.log('Resultado de controladorAgendamiento:  \n', pruebaControladorAgendamiento)
 
-// 		if (pruebaConfirmarCita && pruebaConfirmarCita.cita) {
-// 			console.log(pruebaConfirmarCita)
-// 			const pruebaModificarCita = await modificarCita(
-// 				pruebaConfirmarCita.cita.idCita,
-// 				pruebaControladorAgendamiento.horarios[1]
-// 			)
-// 			console.log('Prueba modificar cita:  \n', pruebaModificarCita)
+	if (
+		pruebaControladorAgendamiento &&
+		pruebaControladorAgendamiento.practicante &&
+		pruebaControladorAgendamiento.horarios.length > 0
+	) {
+		const pruebaConfirmarCita = await confirmarCita(
+			usuario,
+			pruebaControladorAgendamiento.practicante.idPracticante,
+			pruebaControladorAgendamiento.horarios[0]
+		)
+		//console.log('Prueba confirmar cita:  \n', pruebaConfirmarCita)
 
-// 			// const pruebaEliminarCita = await eliminarCita(pruebaConfirmarCita.cita.idCita)
-// 			// console.log('Prueba eliminar cita:  \n', pruebaEliminarCita)
-// 		} else {
-// 			console.error('Error: No se pudo confirmar la cita.')
-// 		}
-// 	} else {
-// 		console.error('Error: No se encontraron horarios o practicantes disponibles.')
-// 	}
+		if (pruebaConfirmarCita && pruebaConfirmarCita.cita) {
+			const pruebaModificarCita = await modificarCita(
+				pruebaConfirmarCita.cita.idCita,
+				pruebaControladorAgendamiento.horarios[1]
+			)
+			//console.log('Prueba modificar cita:  \n', pruebaModificarCita)
 
-// 	const pruebaConsultarCita = await consultarCita(usuario.idUsuario)
-// 	console.log('Prueba consultar cita:  \n', pruebaConsultarCita)
-// } catch (error) {
-// 	console.error('Error en las pruebas:', error)
-// }
+			const pruebaEliminarCita = await eliminarCita(pruebaConfirmarCita.cita.idCita)
+			//console.log('Prueba eliminar cita:  \n', pruebaEliminarCita)
+		} else {
+			console.error('Error: No se pudo confirmar la cita.')
+		}
+	} else {
+		console.error('Error: No se encontraron horarios o practicantes disponibles.')
+	}
+
+	const pruebaConsultarCita = await consultarCita(usuario.idUsuario)
+	//console.log('Prueba consultar cita:  \n', pruebaConsultarCita)
+} catch (error) {
+	console.error('Error en las pruebas:', error)
+}
