@@ -122,7 +122,7 @@ export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 //---------------------------------------------------------------------------------------------------------
 
 export const agendFlow = addKeyword(utils.setEvent('AGEND_FLOW')).addAction(
-	async (ctx, { flowDynamic, state, gotoFlow }) => {
+	async (ctx, { flowDynamic, state }) => {
 		const user = state.get('user')
 		const msgAgend = await apiAgend(ctx.from, ctx.body, user)
 		if (msgAgend.includes('Se ha registrado su cita para el día')) {
@@ -130,7 +130,7 @@ export const agendFlow = addKeyword(utils.setEvent('AGEND_FLOW')).addAction(
 			user.ayudaPsicologica = 0
 			await state.update({ user: user })
 			await switchFlujo(ctx.from, 'assistantFlow')
-			return gotoFlow(assistantFlow)
+			await flowDynamic(msgAgend)
 		} else await flowDynamic(msgAgend)
 	}
 )

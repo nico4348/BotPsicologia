@@ -19,22 +19,22 @@ model informacionUsuario {
   testActual       String   @default("ghq12")
   motivo           String?
   ayudaPsicologica Int      @default(1)
-  tratDatos        Boolean  @default(false)
   historial        Json?
   flujo            String   @default("register")
   sesion           Int      @default(0)
   estado           Boolean  @default(true)
   fechaCreacion    DateTime @default(now())
 
-  practicanteAsignado String? // ID del practicante asignado permanentemente
+  practicanteAsignado String?
 
   // Relación con ghq12
   ghq12 ghq12?
   tests tests?
 
   // Agendamiento
-  disponibilidad Json   @default("{}")
+  disponibilidad Json            @default("{}")
   citas          cita[]
+  registroCitas  registroCitas[]
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -73,7 +73,8 @@ model consultorio {
   activo        Boolean  @default(true)
   fechaCreacion DateTime @default(now())
 
-  citas cita[] // Relación con cita
+  citas         cita[] // Relación con cita
+  registroCitas registroCitas[]
 }
 
 model practicante {
@@ -89,10 +90,25 @@ model practicante {
   sesiones         Int      @default(0)
   fechaCreacion    DateTime @default(now())
 
-  citas cita[] // Relación con cita
+  citas         cita[] // Relación con cita
+  registroCitas registroCitas[]
 }
 
 model cita {
+  idCita        String   @id @unique @default(uuid())
+  idConsultorio String
+  idUsuario     String
+  idPracticante String
+  fechaHora     DateTime
+  estado        String   @default("pendiente")
+  fechaCreacion DateTime @default(now())
+
+  consultorio consultorio        @relation(fields: [idConsultorio], references: [idConsultorio]) // Relación con consultorio
+  usuario     informacionUsuario @relation(fields: [idUsuario], references: [idUsuario]) // Relación con informacionUsuario
+  practicante practicante        @relation(fields: [idPracticante], references: [idPracticante]) // Relación con practicante
+}
+
+model registroCitas {
   idCita        String   @id @unique @default(uuid())
   idConsultorio String
   idUsuario     String

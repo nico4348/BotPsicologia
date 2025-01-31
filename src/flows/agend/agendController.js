@@ -152,7 +152,7 @@ async function encontrarConsultorioDisponible(fechaHora) {
 	return consultorios.find((c) => c.citas.length === 0)
 }
 
-//!--------------------------    Ejecutar un ejemplo    --------------------------!//
+//*--------------------------    Ejecutar un ejemplo    --------------------------*//
 
 // async function ejecutarEjemplo() {
 // 	try {
@@ -180,4 +180,4 @@ async function encontrarConsultorioDisponible(fechaHora) {
 // const cita = await ejecutarEjemplo()
 // console.log(format(cita.fechaHora, { time: 'full', date: 'full' }, 'es'))
 
-//!--------------------------    Ejecutar un ejemplo    --------------------------!//
+//*--------------------------    Ejecutar un ejemplo    --------------------------*//

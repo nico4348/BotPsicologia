@@ -1,8 +1,16 @@
 import OpenAI from 'openai'
-import { obtenerHist, saveHist, actualizarDisp } from '../../queries/queries.js'
+import {
+	prisma,
+	obtenerHist,
+	saveHist,
+	actualizarDisp,
+	switchAyudaPsicologica,
+	switchFlujo,
+} from '../../queries/queries.js'
 import { promptAgend } from '../../openAi/prompts.js'
 import { apiHorarios } from './aiHorarios.js'
-import { controladorAgendamiento, confirmarCita } from './agendController.js'
+import { asignarCita } from './agendController.js'
+import { format } from '@formkit/tempo'
 
 //---------------------------------------------------------------------------------------------------------
 
@@ -71,9 +79,10 @@ export async function apiAgend(numero, msg) {
 						const args = JSON.parse(toolCall.function.arguments)
 
 						if (args.disp) {
-							const cita = await saveDisp(args.disp, numero)
-
+							const dia = await saveDisp(args.disp, numero)
 							// Agregar el resultado de la función al historial
+							const cita = format(dia.fechaHora, 'dddd, D MMMM HH:mm', 'es')
+
 							conversationHistory.push({
 								role: 'assistant',
 								content: `Se ha registrado su cita para el día ${cita}`,
@@ -109,22 +118,36 @@ export async function apiAgend(numero, msg) {
 
 async function saveDisp(disp, numero) {
 	try {
-		//! Añadir la validacion de si el usuario ya tiene una cita
-
 		const horario = await apiHorarios(disp)
 		const user = await actualizarDisp(numero, horario)
-		let tempCita = await controladorAgendamiento(user)
-		let cita = await confirmarCita(
-			user,
-			tempCita.practicante.idPracticante,
-			tempCita.horarios[0]
-		)
-		console.log(cita)
-		return horario
+
+		await switchAyudaPsicologica(numero, 0)
+		await switchFlujo(numero, 'assistantFlow')
+		let tempCita = await asignarCita(user)
+		console.log(tempCita)
+		return tempCita
 	} catch (error) {
 		console.error('Error al guardar la disponibilidad:', error)
 		throw error
 	}
 }
-
 //---------------------------------------------------------------------------------------------------------
+export async function reAgend(disp, numero) {
+	try {
+		await prisma.informacionUsuario.update({
+			where: { telefonoPersonal: numero },
+			data: { disponibilidad: {} },
+		})
+		const horario = await apiHorarios(disp)
+		const user = await actualizarDisp(numero, horario)
+
+		await switchAyudaPsicologica(numero, 0)
+		await switchFlujo(numero, 'assistantFlow')
+		let tempCita = await asignarCita(user)
+		console.log(tempCita)
+		return tempCita
+	} catch (error) {
+		console.error('Error al guardar la disponibilidad:', error)
+		throw error
+	}
+}
