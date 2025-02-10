@@ -323,7 +323,6 @@ export const getUsuario = async (documento) => {
 				testActual: true,
 				motivo: true,
 				ayudaPsicologica: true,
-				tratDatos: true,
 				flujo: true,
 				sesion: true,
 				estado: true,
@@ -670,3 +669,5 @@ export const obtenerPracticante = async (idPracticante) => {
 		throw new Error('Hubo un problema al obtener el Practicante.')
 	}
 }
+
+console.log(await getUsuario('1000224056'))

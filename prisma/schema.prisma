@@ -9,22 +9,22 @@ datasource db {
 
 //Creacion usuario:-----------------------------------------------------------------------------------------------------------------------------------------------------
 model informacionUsuario {
-  idUsuario        String   @id @unique @default(uuid())
-  nombre           String?
-  apellido         String?
-  correo           String?  @unique
-  telefonoPersonal String   @unique
-  documento        String?  @unique
-  tipoDocumento    String   @default("CC")
-  testActual       String   @default("ghq12")
-  motivo           String?
-  ayudaPsicologica Int      @default(1)
-  historial        Json?
-  flujo            String   @default("register")
-  sesion           Int      @default(0)
-  estado           Boolean  @default(true)
-  fechaCreacion    DateTime @default(now())
-
+  idUsuario           String   @id @unique @default(uuid())
+  nombre              String?
+  apellido            String?
+  correo              String?  @unique
+  telefonoPersonal    String   @unique
+  documento           String?  @unique
+  tipoDocumento       String   @default("CC")
+  testActual          String   @default("ghq12")
+  motivo              String?
+  ayudaPsicologica    Int      @default(1)
+  historial           Json?
+  flujo               String   @default("register")
+  sesion              Int      @default(0)
+  estado              Boolean  @default(true)
+  fechaCreacion       DateTime @default(now())
+  disponibilidad      Json     @default("{}")
   practicanteAsignado String?
 
   // Relación con ghq12
@@ -32,9 +32,8 @@ model informacionUsuario {
   tests tests?
 
   // Agendamiento
-  disponibilidad Json            @default("{}")
-  citas          cita[]
-  registroCitas  registroCitas[]
+  citas         cita[]
+  registroCitas registroCitas[]
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------
