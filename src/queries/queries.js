@@ -669,5 +669,3 @@ export const obtenerPracticante = async (idPracticante) => {
 		throw new Error('Hubo un problema al obtener el Practicante.')
 	}
 }
-
-console.log(await getUsuario('1000224056'))
