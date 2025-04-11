@@ -294,3 +294,21 @@ export const actualizarDisp = async (numero, disp) => {
 }
 
 //---------------------------------------------------------------------------------------------------------
+
+//querie para añadir motivo en usuario
+export const addMotivo = async (numero, motivo) => {
+	try {
+		const change = await prisma.informacionUsuario.updateMany({
+			where: {
+				telefonoPersonal: numero,
+			},
+			data: {
+				motivo: motivo,
+			},
+		})
+		return change
+	} catch (error) {
+		console.error('Error cambiando el test:', error)
+		throw new Error('Hubo un problema cambiando el test.')
+	}
+}

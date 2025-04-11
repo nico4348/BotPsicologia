@@ -26,6 +26,10 @@ export const welcomeFlow = addKeyword(EVENTS.WELCOME).addAction(
 				console.log('agendFlow')
 				return gotoFlow(agendFlow)
 
+			case 'finalFlow':
+				console.log('finalFlow')
+				return gotoFlow(finalFlow)
+
 			default:
 				console.log('registerFlow')
 				return gotoFlow(registerFlow)
@@ -94,7 +98,7 @@ export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 					infoCues
 				)}`
 
-				const accion = `Debes analizar las respuestas del usuario y asignarle en lo que más grave está
+				let accion = `Debes analizar las respuestas del usuario y asignarle en lo que más grave está
 					Entre las siguientes opciones:
 					"dep"(depresión)
 					"ans"(ansiedad)
@@ -111,8 +115,11 @@ export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 				const nuevoTest = await changeTest(ctx.from, test)
 				await flowDynamic(await procesarMensaje(ctx.from, ctx.body, nuevoTest))
 			} else {
-				await switchFlujo(ctx.from, 'agendFlow')
-				return gotoFlow(agendFlow)
+				await switchFlujo(ctx.from, 'finalFlow')
+				return gotoFlow(finalFlow)
+
+				//! await switchFlujo(ctx.from, 'agendFlow')
+				//! return gotoFlow(agendFlow)
 			}
 		}
 	}
@@ -124,6 +131,14 @@ export const agendFlow = addKeyword(utils.setEvent('AGEND_FLOW')).addAction(
 	async (ctx, { flowDynamic, state }) => {
 		const user = state.get('user')
 		await flowDynamic(await apiAgend(ctx.from, ctx.body, user))
+	}
+)
+
+//---------------------------------------------------------------------------------------------------------
+
+export const finalFlow = addKeyword(utils.setEvent('FINAL_FLOW')).addAction(
+	async (_, { flowDynamic }) => {
+		await flowDynamic('Gracias por usar el bot, hasta luego!')
 	}
 )
 

@@ -18,6 +18,8 @@ const aiRegister = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
 })
 
+let c = 0
+
 //---------------------------------------------------------------------------------------------------------
 
 async function cambiarEstado(num, hist) {
@@ -70,9 +72,9 @@ export async function apiAssistant1(numero, msg) {
 		content: assistantPrompt,
 	})
 	if (Math.floor(Math.random() * 10) <= 7) {
-		let c = 0
 		c = c + 1
 		console.log('Numero aleatorio')
+		console.log(c)
 		if (c >= 3) {
 			conversationHistory.push({
 				role: 'system',

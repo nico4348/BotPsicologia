@@ -1,14 +1,28 @@
 import { createBot, createProvider, createFlow } from '@builderbot/bot'
 import { MysqlAdapter as Database } from '@builderbot/database-mysql'
 import { BaileysProvider as Provider } from '@builderbot/provider-baileys'
-import { welcomeFlow, registerFlow, assistantFlow, testFlow, agendFlow } from './flows/flows.js'
+import {
+	welcomeFlow,
+	registerFlow,
+	assistantFlow,
+	testFlow,
+	agendFlow,
+	finalFlow,
+} from './flows/flows.js'
 
 const PORT = process.env.PORT ?? 3008
 
 //---------------------------------------------------------------------------------------------------------
 
 const main = async () => {
-	const adapterFlow = createFlow([welcomeFlow, registerFlow, assistantFlow, testFlow, agendFlow])
+	const adapterFlow = createFlow([
+		welcomeFlow,
+		registerFlow,
+		assistantFlow,
+		testFlow,
+		agendFlow,
+		finalFlow,
+	])
 
 	const adapterProvider = createProvider(Provider)
 	const adapterDB = new Database({
@@ -18,11 +32,19 @@ const main = async () => {
 		password: process.env.MYSQL_DB_PASSWORD,
 	})
 
-	const { handleCtx, httpServer } = await createBot({
-		flow: adapterFlow,
-		provider: adapterProvider,
-		database: adapterDB,
-	})
+	const { handleCtx, httpServer } = await createBot(
+		{
+			flow: adapterFlow,
+			provider: adapterProvider,
+			database: adapterDB,
+		},
+		{
+			queue: {
+				timeout: 1000,
+				concurrencyLimit: 5,
+			},
+		}
+	)
 
 	//---------------------------------------------------------------------------------------------------------
 

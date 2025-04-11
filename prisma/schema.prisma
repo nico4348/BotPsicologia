@@ -17,7 +17,8 @@ model informacionUsuario {
   documento        String? @unique
   tipoDocumento    String  @default("CC")
   testActual       String  @default("ghq12")
-  motivo           String?
+  motivo           String? @db.Text
+
   ayudaPsicologica Int     @default(1)
   tratDatos        Boolean @default(false)
   historial        Json?
