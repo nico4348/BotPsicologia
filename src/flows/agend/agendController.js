@@ -1,8 +1,3 @@
-// model informacionUsuario {
-//     practicanteAsignado String? // ID del practicante asignado permanentemente
-//   }
-//IMPORTANTE CREAR ESPACIO PARA EL ID DEL PRACTICANTE EN LA INFO DEL USUARIO!!!!
-
 import { prisma } from '../../queries/queries.js'
 
 export async function controladorAgendamiento(datosUsuario) {

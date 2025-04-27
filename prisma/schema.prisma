@@ -18,11 +18,12 @@ model informacionUsuario {
   tipoDocumento    String  @default("CC")
   testActual       String  @default("ghq12")
   motivo           String? @db.Text
-
+  sesion           Int     @default(0)
   ayudaPsicologica Int     @default(1)
   tratDatos        Boolean @default(false)
   historial        Json?
   flujo            String  @default("register")
+  estado           Boolean @default(false)
 
   practicanteAsignado String? // ID del practicante asignado permanentemente
 
@@ -83,16 +84,17 @@ model practicante {
   barrio           String
   localidad        String
   horario          Json
+  sesiones         Int    @default(0)
 
   citas cita[] // Relación con cita
 }
 
 model cita {
-  idCita        String @id @unique @default(uuid())
+  idCita        String   @id @unique @default(uuid())
   idConsultorio String
   idUsuario     String
   idPracticante String
-  fechaHora     String
+  fechaHora     DateTime
 
   consultorio consultorio        @relation(fields: [idConsultorio], references: [idConsultorio]) // Relación con consultorio
   usuario     informacionUsuario @relation(fields: [idUsuario], references: [idUsuario]) // Relación con informacionUsuario
