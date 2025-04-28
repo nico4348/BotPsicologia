@@ -1,102 +1,103 @@
 //---------------------------------------------------------------------------------------------------------
 
-import { addKeyword, utils, EVENTS } from '@builderbot/bot'
-import { obtenerUsuario, changeTest, getInfoCuestionario, switchFlujo } from '../queries/queries.js'
-import { apiRegister } from './register/aiRegister.js'
-import { apiAssistant1, apiAssistant2 } from './assist/aiAssistant.js'
-import { procesarMensaje } from './tests/proccesTest.js'
-import { apiBack1 } from '../openAi/aiBack.js'
-import { apiAgend } from './agend/aiAgend.js'
+import { addKeyword, utils, EVENTS } from "@builderbot/bot";
+import {
+	obtenerUsuario,
+	changeTest,
+	getInfoCuestionario,
+	switchFlujo,
+	switchAyudaPsicologica,
+} from "../queries/queries.js";
+import { apiRegister } from "./register/aiRegister.js";
+import { apiAssistant1, apiAssistant2 } from "./assist/aiAssistant.js";
+import { procesarMensaje } from "./tests/proccesTest.js";
+import { apiBack1 } from "../openAi/aiBack.js";
+import { apiAgend } from "./agend/aiAgend.js";
 
 //---------------------------------------------------------------------------------------------------------
 
 export const welcomeFlow = addKeyword(EVENTS.WELCOME).addAction(
 	async (ctx, { gotoFlow, state }) => {
-		const user = await obtenerUsuario(ctx.from)
-		await state.update({ user: user })
-		console.log(user.flujo)
+		const user = await obtenerUsuario(ctx.from);
+		await state.update({ user: user });
+		console.log(user.flujo);
 		switch (user.flujo) {
-			case 'assistantFlow':
-				console.log('assistantFlow')
-				return gotoFlow(assistantFlow)
-			case 'testFlow':
-				console.log('testFlow')
-				return gotoFlow(testFlow)
-			case 'agendFlow':
-				console.log('agendFlow')
-				return gotoFlow(agendFlow)
+			case "assistantFlow":
+				console.log("assistantFlow");
+				return gotoFlow(assistantFlow);
+			case "testFlow":
+				console.log("testFlow");
+				return gotoFlow(testFlow);
+			case "agendFlow":
+				console.log("agendFlow");
+				return gotoFlow(agendFlow);
 
-			case 'finalFlow':
-				console.log('finalFlow')
-				return gotoFlow(finalFlow)
+			case "finalFlow":
+				console.log("finalFlow");
+				return gotoFlow(finalFlow);
 
 			default:
-				console.log('registerFlow')
-				return gotoFlow(registerFlow)
+				console.log("registerFlow");
+				return gotoFlow(registerFlow);
 		}
 	}
-)
+);
 
 //---------------------------------------------------------------------------------------------------------
 
-export const registerFlow = addKeyword(utils.setEvent('REGISTER_FLOW')).addAction(
+export const registerFlow = addKeyword(utils.setEvent("REGISTER_FLOW")).addAction(
 	async (ctx, { flowDynamic }) => {
-		await flowDynamic(await apiRegister(ctx.from, ctx.body))
+		await flowDynamic(await apiRegister(ctx.from, ctx.body));
 	}
-)
+);
 
 //---------------------------------------------------------------------------------------------------------
 
-export const assistantFlow = addKeyword(utils.setEvent('ASSISTANT_FLOW')).addAction(
+export const assistantFlow = addKeyword(utils.setEvent("ASSISTANT_FLOW")).addAction(
 	async (ctx, { flowDynamic, gotoFlow, state }) => {
-		const user = state.get('user')
-		if (!user.ayudaPsicologica) {
-			const ass2 = await apiAssistant2(ctx.from, ctx.body)
-			if (ass2 == true) {
-				return gotoFlow(testFlow)
-			} else {
-				await flowDynamic(ass2)
-			}
+		const user = state.get("user");
+
+		if (user.ayudaPsicologica == 2) {
+			await switchFlujo(user.telefonoPersonal, "testFlow");
+			return gotoFlow(testFlow);
+		} else if (user.ayudaPsicologica == 0) {
+			const assist = await apiAssistant2(ctx.from, ctx.body, user.idUsuario);
+			await flowDynamic(assist);
 		} else {
-			if (user.ayudaPsicologica == 2) {
-				await switchFlujo(user.telefonoPersonal, 'testFlow')
-				return gotoFlow(testFlow)
-			} else {
-				const assist = await apiAssistant1(ctx.from, ctx.body)
-				await flowDynamic(assist)
-			}
+			const assist = await apiAssistant1(ctx.from, ctx.body);
+			await flowDynamic(assist);
 		}
 	}
-)
+);
 
 //---------------------------------------------------------------------------------------------------------
 
-export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
+export const testFlow = addKeyword(utils.setEvent("TEST_FLOW")).addAction(
 	async (ctx, { flowDynamic, gotoFlow, state }) => {
-		const user = state.get('user')
-		console.log(ctx.from, '\n', user.testActual)
+		const user = state.get("user");
+		console.log(ctx.from, "\n", user.testActual);
 		// Validate procesarMensaje output
-		const message = await procesarMensaje(ctx.from, ctx.body, user.testActual)
+		const message = await procesarMensaje(ctx.from, ctx.body, user.testActual);
 
-		if (!message || typeof message !== 'string') {
-			console.error('Error: procesarMensaje returned an invalid value.', { message })
+		if (!message || typeof message !== "string") {
+			console.error("Error: procesarMensaje returned an invalid value.", { message });
 			await flowDynamic(
-				'Ocurrió un error procesando el mensaje. Por favor, inténtelo de nuevo.'
-			)
-			return
+				"Ocurrió un error procesando el mensaje. Por favor, inténtelo de nuevo."
+			);
+			return;
 		}
 
-		await flowDynamic(message)
+		await flowDynamic(message);
 
-		if (message.includes('El cuestionario ha terminado.')) {
-			if (user.testActual == 'ghq12') {
+		if (message.includes("El cuestionario ha terminado.")) {
+			if (user.testActual == "ghq12") {
 				const { infoCues, preguntasString } = await getInfoCuestionario(
 					ctx.from,
 					user.testActual
-				)
+				);
 				const historialContent = `De las preguntas ${preguntasString}, el usuario respondio asi: ${JSON.stringify(
 					infoCues
-				)}`
+				)}`;
 
 				let accion = `Debes analizar las respuestas del usuario y asignarle en lo que más grave está
 					Entre las siguientes opciones:
@@ -106,41 +107,47 @@ export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 					"suic"(ideacion suicida)
 					"calVida"(Calidad de vida)
 					Responde unicamente con "dep", "ans", "estr", "suic" o "calVida"
-				`
-				const hist = user.historial
-				hist.push({ role: 'system', content: historialContent })
-				let test = await apiBack1(hist, accion)
-				test = test.replace(/"/g, '') // Elimina todas las comillas
+				`;
+				const hist = user.historial;
+				hist.push({ role: "system", content: historialContent });
+				let test = await apiBack1(hist, accion);
+				test = test.replace(/"/g, ""); // Elimina todas las comillas
 
-				const nuevoTest = await changeTest(ctx.from, test)
-				await flowDynamic(await procesarMensaje(ctx.from, ctx.body, nuevoTest))
+				const nuevoTest = await changeTest(ctx.from, test);
+				await flowDynamic(await procesarMensaje(ctx.from, ctx.body, nuevoTest));
 			} else {
-				await switchFlujo(ctx.from, 'finalFlow')
-				return gotoFlow(finalFlow)
-
-				//! await switchFlujo(ctx.from, 'agendFlow')
-				//! return gotoFlow(agendFlow)
+				// await switchFlujo(ctx.from, 'finalFlow')
+				// return gotoFlow(finalFlow)
+				await switchFlujo(ctx.from, "agendFlow");
+				return gotoFlow(agendFlow);
 			}
 		}
 	}
-)
+);
 
 //---------------------------------------------------------------------------------------------------------
 
-export const agendFlow = addKeyword(utils.setEvent('AGEND_FLOW')).addAction(
+export const agendFlow = addKeyword(utils.setEvent("AGEND_FLOW")).addAction(
 	async (ctx, { flowDynamic, state }) => {
-		const user = state.get('user')
-		await flowDynamic(await apiAgend(ctx.from, ctx.body, user))
+		const user = state.get("user");
+		const msgAgend = await apiAgend(ctx.from, ctx.body, user);
+		if (msgAgend.includes("Se ha registrado su cita para el día")) {
+			await switchAyudaPsicologica(ctx.from, 0);
+			user.ayudaPsicologica = 0;
+			await state.update({ user: user });
+			await switchFlujo(ctx.from, "assistantFlow");
+			await flowDynamic(msgAgend);
+		} else await flowDynamic(msgAgend);
 	}
-)
+);
 
 //---------------------------------------------------------------------------------------------------------
 
-export const finalFlow = addKeyword(utils.setEvent('FINAL_FLOW')).addAction(
+export const finalFlow = addKeyword(utils.setEvent("FINAL_FLOW")).addAction(
 	async (_, { flowDynamic }) => {
-		await flowDynamic('Gracias por usar el bot, hasta luego!')
+		await flowDynamic("Gracias por usar el bot, hasta luego!");
 	}
-)
+);
 
 //---------------------------------------------------------------------------------------------------------
 

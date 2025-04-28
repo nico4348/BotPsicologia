@@ -1,152 +1,148 @@
-import { prisma } from '../../queries/queries.js'
+import { prisma, obtenerUsuario } from "../../queries/queries.js";
+
+/**
+ * Devuelve la próxima fecha (YYYY-MM-DD) correspondiente al día de la semana dado.
+ * @param {'lun'|'mar'|'mie'|'jue'|'vie'|'sab'|'dom'} diaAbrev
+ */
+function obtenerProximaFecha(diaAbrev) {
+	const mapDias = { dom: 0, lun: 1, mar: 2, mie: 3, jue: 4, vie: 5, sab: 6 };
+	const hoy = new Date();
+	const hoyNum = hoy.getDay();
+	const target = mapDias[diaAbrev];
+	if (target === undefined) throw new Error(`Día inválido: ${diaAbrev}`);
+	let diff = target - hoyNum;
+	if (diff <= 0) diff += 7;
+	const proxima = new Date(hoy);
+	proxima.setDate(hoy.getDate() + diff);
+	const yyyy = proxima.getFullYear();
+	const mm = String(proxima.getMonth() + 1).padStart(2, "0");
+	const dd = String(proxima.getDate()).padStart(2, "0");
+	return `${yyyy}-${mm}-${dd}`;
+}
 
 export async function controladorAgendamiento(datosUsuario) {
 	try {
-		const horarioUsuario = datosUsuario.disponibilidad
-		console.log(horarioUsuario)
+		const disponibilidadUsuario = datosUsuario.disponibilidad;
+		if (!disponibilidadUsuario || Object.keys(disponibilidadUsuario).length === 0) {
+			throw new Error("El usuario no tiene disponibilidad registrada");
+		}
 
-		let practicanteSeleccionado
-		let horarioCoincidente
+		// 1) Traer TODOS los practicantes con sesiones ≤ 70
+		const candidatos = await prisma.practicante.findMany({
+			where: { sesiones: { lte: 70 } },
+		});
 
-		// Verificar si el usuario ya tiene practicante asignado
-		if (datosUsuario.practicanteAsignado) {
-			// Buscar horarios con el practicante asignado
-			practicanteSeleccionado = await prisma.practicante.findUnique({
-				where: { idPracticante: datosUsuario.practicanteAsignado },
-			})
-
-			if (!practicanteSeleccionado) {
-				throw new Error('Practicante asignado no encontrado')
-			}
-
-			const horarioPracticante = practicanteSeleccionado.horario
-			const coincidencias = encontrarHorariosCoincidentes(horarioUsuario, horarioPracticante)
-
+		// 2) Filtrar solo los que tengan horas coincidentes
+		const disponibles = [];
+		for (const prac of candidatos) {
+			const coincidencias = encontrarHorariosCoincidentes(
+				disponibilidadUsuario,
+				prac.horario
+			);
 			if (coincidencias.length > 0) {
-				horarioCoincidente = coincidencias[0]
-			} else {
-				throw new Error('No hay horarios disponibles con el practicante asignado')
-			}
-		} else {
-			// Buscar nuevo practicante disponible
-			const practicantes = await prisma.practicante.findMany()
-
-			for (const practicante of practicantes) {
-				const horarioPracticante = practicante.horario
-				const coincidencias = encontrarHorariosCoincidentes(
-					horarioUsuario,
-					horarioPracticante
-				)
-
-				if (coincidencias.length > 0) {
-					practicanteSeleccionado = practicante
-					horarioCoincidente = coincidencias[0]
-
-					// Asignar practicante al usuario de forma permanente
-					await prisma.informacionUsuario.update({
-						where: { idUsuario: datosUsuario.idUsuario },
-						data: {
-							practicanteAsignado: practicante.idPracticante,
-						},
-					})
-
-					break
-				}
+				disponibles.push({ practicante: prac, coincidencias });
 			}
 		}
 
-		if (!practicanteSeleccionado || !horarioCoincidente) {
-			throw new Error('No se encontró disponibilidad con ningún practicante')
+		if (disponibles.length === 0) {
+			throw new Error("No hay practicantes disponibles con ese horario y ≤ 70 sesiones");
 		}
 
-		// Buscar consultorio disponible
-		const consultorios = await prisma.consultorio.findMany({
-			where: { activo: true },
-		})
+		// 3) Selección aleatoria de un practicante válido
+		const idx = Math.floor(Math.random() * disponibles.length);
+		const { practicante, coincidencias } = disponibles[idx];
+		const horarioCoincidente = coincidencias[0]; // tomamos el primer bloque
+		const dia = horarioCoincidente.dia; // ej. 'mie'
+		const hora = horarioCoincidente.horas[0]; // ej. '10:00'
 
-		let consultorioSeleccionado = null
-		for (const consultorio of consultorios) {
-			const citasExistentes = await prisma.cita.findMany({
+		// 4) Convertir día+hora en un objeto Date
+		const fechaStr = obtenerProximaFecha(dia); // '2025-04-23'
+		const fechaHora = new Date(`${fechaStr}T${hora}:00`);
+
+		// 5) Buscar un consultorio libre en esa fechaHora
+		const consultorios = await prisma.consultorio.findMany({ where: { activo: true } });
+		let consultorioSeleccionado = null;
+		for (const c of consultorios) {
+			const ocupada = await prisma.cita.findFirst({
 				where: {
-					idConsultorio: consultorio.idConsultorio,
-					fechaHora: `${horarioCoincidente.dia} ${horarioCoincidente.horas[0]}`,
+					idConsultorio: c.idConsultorio,
+					fechaHora,
 				},
-			})
-
-			if (citasExistentes.length === 0) {
-				consultorioSeleccionado = consultorio
-				break
+			});
+			if (!ocupada) {
+				consultorioSeleccionado = c;
+				break;
 			}
 		}
-
 		if (!consultorioSeleccionado) {
-			throw new Error('No hay consultorios disponibles')
+			throw new Error("No hay consultorios disponibles en esa franja");
 		}
 
-		// Crear la cita y actualizar disponibilidad del practicante
+		// 6) Crear la cita
 		const nuevaCita = await prisma.cita.create({
 			data: {
 				idUsuario: datosUsuario.idUsuario,
-				idPracticante: practicanteSeleccionado.idPracticante,
+				idPracticante: practicante.idPracticante,
 				idConsultorio: consultorioSeleccionado.idConsultorio,
-				fechaHora: `${horarioCoincidente.dia} ${horarioCoincidente.horas[0]}`,
+				fechaHora,
 			},
-		})
+		});
 
-		// Actualizar horario del practicante
-		const horarioPracticanteActualizado = practicanteSeleccionado.horario
-		const horaIndex = horarioPracticanteActualizado[horarioCoincidente.dia].indexOf(
-			horarioCoincidente.horas[0]
-		)
-		if (horaIndex > -1) {
-			horarioPracticanteActualizado[horarioCoincidente.dia].splice(horaIndex, 1)
-		}
+		// 7) Actualizar horario del practicante (remover la hora reservada) y aumentar sesiones
+		const horarioActualizado = { ...practicante.horario };
+		const listaHoras = horarioActualizado[dia];
+		const pos = listaHoras.indexOf(hora);
+		if (pos > -1) listaHoras.splice(pos, 1);
 
 		await prisma.practicante.update({
-			where: { idPracticante: practicanteSeleccionado.idPracticante },
+			where: { idPracticante: practicante.idPracticante },
 			data: {
-				horario: horarioPracticanteActualizado,
+				horario: horarioActualizado,
+				sesiones: { increment: 1 },
 			},
-		})
+		});
+
+		// 8) Asignar PRÁCTICANTE al usuario (para futuras citas)
+		await prisma.informacionUsuario.update({
+			where: { idUsuario: datosUsuario.idUsuario },
+			data: { practicanteAsignado: practicante.idPracticante },
+		});
 
 		return {
 			success: true,
 			cita: {
 				...nuevaCita,
 				practicante: {
-					nombre: practicanteSeleccionado.nombre,
-					idPracticante: practicanteSeleccionado.idPracticante,
+					idPracticante: practicante.idPracticante,
+					nombre: practicante.nombre,
 				},
 				consultorio: {
-					nombre: consultorioSeleccionado.nombre,
 					idConsultorio: consultorioSeleccionado.idConsultorio,
+					nombre: consultorioSeleccionado.nombre,
 				},
 			},
-			esPrimeraCita: !datosUsuario.practicanteAsignado,
-		}
+		};
 	} catch (error) {
-		console.error('Error en agendamiento:', error)
-		throw error
+		console.error("Error en agendamiento:", error);
+		throw error;
 	}
 }
 
+/**
+ * Recorre ambos JSON de disponibilidad y devuelve un array
+ * de { dia, horas: [...] } donde intersectan.
+ */
 function encontrarHorariosCoincidentes(horarioUsuario, horarioPracticante) {
-	const horariosCoincidentes = []
-
+	const result = [];
 	for (const dia in horarioUsuario) {
-		if (horarioPracticante[dia]) {
-			const horasCoincidentes = horarioUsuario[dia].filter((hora) =>
-				horarioPracticante[dia].includes(hora)
-			)
-
-			if (horasCoincidentes.length > 0) {
-				horariosCoincidentes.push({
-					dia,
-					horas: horasCoincidentes,
-				})
-			}
+		if (!horarioPracticante[dia]) continue;
+		const comunes = horarioUsuario[dia].filter((h) => horarioPracticante[dia].includes(h));
+		if (comunes.length) {
+			result.push({ dia, horas: comunes });
 		}
 	}
-
-	return horariosCoincidentes
+	return result;
 }
+
+const userData = await obtenerUsuario("1"); // Reemplaza "userId" con el ID del usuario que deseas consultar
+console.log(await controladorAgendamiento(userData));
