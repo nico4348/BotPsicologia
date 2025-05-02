@@ -30,6 +30,7 @@ async function register(conversationHistory, number) {
 		"correo":"",
 		"tipoDocumento":"",
 		"documento":"",
+		"tratDatos": true
 		}`,
 	})
 	const jsonRegister = await aiRegister.chat.completions.create({
@@ -39,9 +40,9 @@ async function register(conversationHistory, number) {
 	})
 	const responseJson = JSON.parse(jsonRegister.choices[0].message.content)
 
-	const { nombre, apellido, correo, tipoDocumento, documento } = responseJson
+	const { nombre, apellido, correo, tipoDocumento, documento,tratDatos } = responseJson
 
-	await registrarUsuario(nombre, apellido, correo, tipoDocumento, documento, number)
+	await registrarUsuario(nombre, apellido, correo, tipoDocumento, documento,tratDatos, number)
 	await switchFlujo(number, 'assistantFlow')
 
 	return {
@@ -65,8 +66,9 @@ const tools = [
 			3. Correo
 			4. Tipo de documento (CC, TI, Pasaporte)
 			5. Numero de documento
+			6. Consentimiento explícito para el tratamiento de datos personales
 
-
+			IMPORTANTE: El registro solo debe realizarse cuando el usuario haya aceptado explícitamente el tratamiento de sus datos personales.
 	`,
 			parameters: {
 				type: 'object',

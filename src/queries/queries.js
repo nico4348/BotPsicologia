@@ -24,6 +24,7 @@ export const registrarUsuario = async (
 	correo,
 	tipoDocumento,
 	documento,
+	tratDatos,
 	numero
 ) => {
 	try {
@@ -37,6 +38,7 @@ export const registrarUsuario = async (
 				correo: correo,
 				tipoDocumento: tipoDocumento,
 				documento: documento,
+				tratDatos: tratDatos,
 			},
 		})
 		return user
