@@ -15,6 +15,25 @@ const preguntas = [
 	'11. ¿Ha pensado que usted es una persona que no vale para nada?\n    0) No, en absoluto.\n    1) No más que lo habitual.\n    2) Más que lo habitual.\n    3) Mucho más que lo habitual.',
 	'12. ¿Se siente razonablemente feliz considerando todas las circunstancias?\n    0) Más feliz que lo habitual.\n    1) Igual que lo habitual.\n    2) Menos feliz que lo habitual.\n    3) Mucho menos feliz que lo habitual.',
 ]
+//---------------------------------------------------------------------------------------------------------
+
+// Actualizar el campo tratDatos en la tabla informacionUsuario
+export const actualizarConsentimiento = async (numero, consentimiento) => {
+	try {
+		const update = await prisma.informacionUsuario.update({
+			where: {
+				telefonoPersonal: numero,
+			},
+			data: {
+				tratDatos: consentimiento,
+			},
+		})
+		return update
+	} catch (error) {
+		console.error('Error actualizando el consentimiento:', error)
+		throw new Error('Hubo un problema actualizando el consentimiento.')
+	}
+}
 
 //---------------------------------------------------------------------------------------------------------
 
@@ -24,7 +43,6 @@ export const registrarUsuario = async (
 	correo,
 	tipoDocumento,
 	documento,
-	tratDatos,
 	numero
 ) => {
 	try {
@@ -38,7 +56,6 @@ export const registrarUsuario = async (
 				correo: correo,
 				tipoDocumento: tipoDocumento,
 				documento: documento,
-				tratDatos: tratDatos,
 			},
 		})
 		return user
