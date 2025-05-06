@@ -59,7 +59,7 @@ async function procesarConsentimiento(mensaje, numero) {
     if (
         respuesta.includes('sí, acepto') || 
         respuesta.includes('si, acepto') || 
-        respuesta.includes('acepto') || 
+        respuesta.includes('si acepto') || 
         respuesta === 'si' || 
         respuesta === 'sí'
     ) {
