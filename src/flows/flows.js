@@ -7,7 +7,6 @@ import { apiAssistant1, apiAssistant2 } from './assist/aiAssistant.js'
 import { procesarMensaje } from './tests/proccesTest.js'
 import { apiBack1 } from '../openAi/aiBack.js'
 import { apiAgend } from './agend/aiAgend.js'
-import { consentPrompt} from '../openAi/prompts.js'
 
 //---------------------------------------------------------------------------------------------------------
 
