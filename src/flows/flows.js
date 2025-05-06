@@ -79,30 +79,6 @@ export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
 	async (ctx, { flowDynamic, gotoFlow, state }) => {
 		const user = state.get('user')
 		console.log(ctx.from, '\n', user.testActual)
-
-		if (!user.consentimientoGHQ12 && user.testActual === 'ghq12') {
-            await flowDynamic(consentPrompt)
-            await state.update({ esperandoConsentimiento: true })
-            return
-        }
-
-		// Manejar la respuesta del consentimiento
-		if (state.get('esperandoConsentimiento')) {
-            if (ctx.body.toLowerCase().includes('sí, acepto')) {
-                await flowDynamic('Gracias por su consentimiento. Procederemos con el cuestionario.')
-                await state.update({ consentimientoGHQ12: true, esperandoConsentimiento: false })
-            } else if (ctx.body.toLowerCase().includes('no, no acepto')) {
-                await flowDynamic('Entendido. No se aplicará el cuestionario. Gracias por su tiempo.')
-                await state.update({ consentimientoGHQ12: false, esperandoConsentimiento: false })
-                return gotoFlow(finalFlow) // Redirigir al flujo final
-            } else {
-                await flowDynamic(
-                    'Por favor, responda con *Sí, acepto* o *No, no acepto* para continuar.'
-                )
-                return
-            }
-        }
-
 		// Validate procesarMensaje output
 		const message = await procesarMensaje(ctx.from, ctx.body, user.testActual)
 
