@@ -1,18 +1,12 @@
 //---------------------------------------------------------------------------------------------------------
 
-import { addKeyword, utils, EVENTS } from "@builderbot/bot";
-import {
-  obtenerUsuario,
-  changeTest,
-  getInfoCuestionario,
-  switchFlujo,
-} from "../queries/queries.js";
-import { apiRegister } from "./register/aiRegister.js";
-import { apiAssistant1, apiAssistant2 } from "./assist/aiAssistant.js";
-import { procesarMensaje } from "./tests/proccesTest.js";
-import { apiBack1 } from "../openAi/aiBack.js";
-import { apiAgend } from "./agend/aiAgend.js";
-import { consentPrompt } from "../openAi/prompts.js";
+import { addKeyword, utils, EVENTS } from '@builderbot/bot'
+import { obtenerUsuario, changeTest, getInfoCuestionario, switchFlujo } from '../queries/queries.js'
+import { apiRegister } from './register/aiRegister.js'
+import { apiAssistant1, apiAssistant2 } from './assist/aiAssistant.js'
+import { procesarMensaje } from './tests/proccesTest.js'
+import { apiBack1 } from '../openAi/aiBack.js'
+import { apiAgend } from './agend/aiAgend.js'
 
 //---------------------------------------------------------------------------------------------------------
 
@@ -90,107 +84,32 @@ export const assistantFlow = addKeyword(
 
 //---------------------------------------------------------------------------------------------------------
 
-// Versión simplificada y corregida del flujo de test con manejo de consentimiento mejorado
-export const testFlow = addKeyword(utils.setEvent("TEST_FLOW")).addAction(
-  async (ctx, { flowDynamic, gotoFlow, state }) => {
-    // Obtener el usuario y el estado actual al inicio de la acción
-    const user = state.get("user");
-    // Es buena práctica obtener el estado de consentimiento aquí, ya que state.update
-    // en un turno anterior debería reflejarse en la siguiente ejecución de la acción.
-    const consentimiento = state.get("consentimientoGHQ12");
+export const testFlow = addKeyword(utils.setEvent('TEST_FLOW')).addAction(
+	async (ctx, { flowDynamic, gotoFlow, state }) => {
+		const user = state.get('user')
+		console.log(ctx.from, '\n', user.testActual)
+		// Validate procesarMensaje output
+		const message = await procesarMensaje(ctx.from, ctx.body, user.testActual)
 
-    console.log(ctx.from, "\n", user.testActual);
+		if (!message || typeof message !== 'string') {
+			console.error('Error: procesarMensaje returned an invalid value.', { message })
+			await flowDynamic(
+				'Ocurrió un error procesando el mensaje. Por favor, inténtelo de nuevo.'
+			)
+			return
+		}
 
-    // --- Manejo del Consentimiento para GHQ-12 ---
-    // Caso 1: Es un test GHQ-12 y necesitamos verificar el consentimiento.
-    // Esto se ejecuta si el test actual es ghq12 Y el consentimiento AUN NO se ha dado en este flujo.
-    if (user.testActual === "ghq12" && !consentimiento) {
-      const respuestaLower = ctx.body.toLowerCase();
+		await flowDynamic(message)
 
-      // Si el mensaje indica aceptación clara
-      if (
-        respuestaLower.includes("si acepto") ||
-        respuestaLower.includes("sí acepto") ||
-        respuestaLower.includes("acepto")
-      ) {
-        // Actualizar estado de consentimiento a verdadero
-        await state.update({ consentimientoGHQ12: true });
-
-        // Mensaje de confirmación
-        await flowDynamic(
-          "Gracias por su consentimiento. Procederemos con el cuestionario."
-        );
-
-        // *** CORRECCIÓN CRUCIAL: ***
-        // NO llamar a procesarMensaje aquí inmediatamente después de aceptar.
-        // Simplemente terminamos esta acción. El siguiente mensaje del usuario
-        // activará de nuevo testFlow, donde consentimientoGHQ12 ahora será true,
-        // y se pasará a la lógica de manejo de preguntas/respuestas.
-        return; // Terminamos la acción aquí.
-      }
-      // Si el mensaje indica rechazo claro
-      else if (
-        respuestaLower.includes("no acepto") ||
-        respuestaLower.includes("no, no acepto") ||
-        respuestaLower.includes("rechazo")
-      ) {
-        await flowDynamic(
-          "Entendido. No se aplicará el cuestionario. Gracias por su tiempo."
-        );
-        await switchFlujo(ctx.from, "finalFlow"); // Asegurar que el flujo en DB se actualice
-        return gotoFlow(finalFlow);
-      }
-      // Si es la primera interacción en este flujo o no entendimos la respuesta de consentimiento
-      else {
-        // Mostrar el prompt de consentimiento. Esto también ocurre la primera vez que un usuario
-        // entra a testFlow y su testActual es 'ghq12'.
-        await flowDynamic(consentPrompt);
-        return; // Esperamos una respuesta de consentimiento válida.
-      }
-    }
-
-    // --- Manejo de Preguntas/Respuestas del Test ---
-    // Este bloque se ejecuta si:
-    // 1. Es un test GHQ-12 y el consentimiento ya es TRUE (en el estado).
-    // 2. Es cualquier otro tipo de test (donde no se requiere este manejo de consentimiento específico).
-
-    // Procesar el mensaje del usuario como una respuesta al test actual.
-    // procesarMensaje es responsable de:
-    // - Validar la respuesta.
-    // - Guardar la respuesta.
-    // - Determinar la siguiente pregunta a enviar, o indicar que el test ha terminado.
-    // También debe ser capaz de reconocer, para GHQ-12 con consentimiento true,
-    // que es la primera respuesta, y por lo tanto, debe hacer la primera pregunta del GHQ-12.
-    // Para otros tests, debe hacer la primera pregunta si aún no hay respuestas guardadas para ese test.
-    const message = await procesarMensaje(ctx.from, ctx.body, user.testActual);
-
-    // Validar que la respuesta/mensaje de procesarMensaje sea válido
-    if (!message || typeof message !== "string") {
-      console.error("Error: procesarMensaje devolvió un valor inválido.", {
-        message,
-      });
-      await flowDynamic(
-        "Ocurrió un error procesando el mensaje. Por favor, inténtelo de nuevo o intente responder de otra manera."
-      );
-      // Considera si un mensaje inválido debe sacar al usuario del test o repetir la pregunta.
-      // Actualmente, solo envía un mensaje de error y termina la acción.
-      return;
-    }
-
-    // Enviar la respuesta o la siguiente pregunta del test
-    await flowDynamic(message);
-
-    // Verificar si el cuestionario ha terminado según el mensaje devuelto por procesarMensaje
-    if (message.includes("El cuestionario ha terminado.")) {
-      if (user.testActual == "ghq12") {
-        // Lógica para analizar los resultados del GHQ-12 y determinar el siguiente test
-        const { infoCues, preguntasString } = await getInfoCuestionario(
-          ctx.from,
-          user.testActual
-        );
-        const historialContent = `De las preguntas ${preguntasString}, el usuario respondio asi: ${JSON.stringify(
-          infoCues
-        )}`;
+		if (message.includes('El cuestionario ha terminado.')) {
+			if (user.testActual == 'ghq12') {
+				const { infoCues, preguntasString } = await getInfoCuestionario(
+					ctx.from,
+					user.testActual
+				)
+				const historialContent = `De las preguntas ${preguntasString}, el usuario respondio asi: ${JSON.stringify(
+					infoCues
+				)}`
 
         let accion = `Debes analizar las respuestas del usuario y asignarle en lo que más grave está
                      Entre las siguientes opciones:
